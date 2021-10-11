@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(project_name trigTest)
+set(project_name constexprTrig)
 project(${project_name} LANGUAGES CXX)
 
 add_library(project_options INTERFACE)

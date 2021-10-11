@@ -15,8 +15,9 @@ inline constexpr auto test8 = Trigonometrix::cos<double,false>(M_PI);
 //====================== accuracy and speed tests ============================//
 
 inline constexpr auto runCount = 1000000;
-inline constexpr auto rangeVal = 2000*M_PI;
+inline constexpr auto rangeVal = 20000*M_PI;
 inline constexpr auto stepVal = 0.01;
+inline constexpr auto periodRange = 2*M_PI;
 
 template <typename T>
 void accuracyValuesSin()
@@ -24,9 +25,8 @@ void accuracyValuesSin()
     std::cout << std::endl <<"============== 0, Pi/4, Pi/2,...2*Pi Accuracy range test" << " ==============" << std::endl;
     T start = 0;
     T step = M_PI_4;
-    T range = 2 * M_PI;
-    accuracyBench(start,range,step,&Trigonometrix::sinRad<T, false>, &std::sin,"table implementation");
-    accuracyBench(start,range,step,&Trigonometrix::sinRad<T, true>, &std::sin,"polynomial implementation");
+    accuracyBench(start,T(periodRange),step,&Trigonometrix::sinRad<T, false>, &std::sin,"table implementation");
+    accuracyBench(start,T(periodRange),step,&Trigonometrix::sinRad<T, true>, &std::sin,"polynomial implementation");
 }
 
 template <typename T>
@@ -35,9 +35,8 @@ void accuracyValuesCos()
     std::cout << std::endl <<"============== 0, Pi/4, Pi/2,...2*Pi Accuracy range test" << " ==============" << std::endl;
     T start = 0;
     T step = M_PI_4;
-    T range = 2 * M_PI;
-    accuracyBench(start,range,step,&Trigonometrix::cosRad<T, false>, &std::cos,"table implementation");
-    accuracyBench(start,range,step,&Trigonometrix::cosRad<T, true>, &std::cos,"polynomial implementation");
+    accuracyBench(start,T(periodRange),step,&Trigonometrix::cosRad<T, false>, &std::cos,"table implementation");
+    accuracyBench(start,T(periodRange),step,&Trigonometrix::cosRad<T, true>, &std::cos,"polynomial implementation");
 }
 
 void accuracyRangeTestsSin(std::random_device& r)
@@ -92,29 +91,53 @@ void speedTestsCos(std::random_device& r)
     speedBenchRand(-rangeVal,rangeVal,runCount, &Trigonometrix::sinRad<double, true>, &std::sin,r,"double polynomial implementation");
 }
 
-template <typename T>
-void polyAccuracyTests()
+void polyAccuracyTests(bool sin)
 {
-    // TODO add test for all poly degrees
+    std::cout << std::endl <<"============== Polinomials Accuracy test by number of terms" << " ==============" << std::endl;
+    double start = 0;
+    double step = stepVal;
+    // have to do it the old way
+    if (sin)
+    {
+        accuracyBench(start,periodRange,step,&Trigonometrix::sinRad<double,true,0>, &std::sin, std::string("sin, number of terms: " + std::to_string(2)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sinRad<double,true,1>, &std::sin, std::string("sin, number of terms: " + std::to_string(3)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sinRad<double,true,2>, &std::sin, std::string("sin, number of terms: " + std::to_string(4)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sinRad<double,true,3>, &std::sin, std::string("sin, number of terms: " + std::to_string(5)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sinRad<double,true,4>, &std::sin, std::string("sin, number of terms: " + std::to_string(6)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sinRad<double,true,5>, &std::sin, std::string("sin, number of terms: " + std::to_string(7)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sinRad<double,true,6>, &std::sin, std::string("sin, number of terms: " + std::to_string(8)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sinRad<double,true,7>, &std::sin, std::string("sin, number of terms: " + std::to_string(9)).c_str());
+    }
+    else
+    {
+        accuracyBench(start,periodRange,step,&Trigonometrix::cosRad<double,true,0>, &std::cos,std::string("cos, number of terms: " + std::to_string(2)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cosRad<double,true,1>, &std::cos,std::string("cos, number of terms: " + std::to_string(3)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cosRad<double,true,2>, &std::cos,std::string("cos, number of terms: " + std::to_string(4)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cosRad<double,true,3>, &std::cos,std::string("cos, number of terms: " + std::to_string(5)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cosRad<double,true,4>, &std::cos,std::string("cos, number of terms: " + std::to_string(6)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cosRad<double,true,5>, &std::cos,std::string("cos, number of terms: " + std::to_string(7)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cosRad<double,true,6>, &std::cos,std::string("cos, number of terms: " + std::to_string(8)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cosRad<double,true,7>, &std::cos,std::string("cos, number of terms: " + std::to_string(9)).c_str());
+    }
 }
 
 
 int main()
 {
-    //generateSinCosTable<float>();// TODO make lut generator tests
-    //generateSinCosTable<double>();
     std::random_device r;
     std::cout << std::endl <<"============== Sine Benchmark " << " ==============" << std::endl;
     accuracyRangeTestsSin(r);
     accuracyValuesSin<float>();
     accuracyValuesSin<double>();
     speedTestsSin(r);
+    polyAccuracyTests(true);
     std::cout << std::endl <<"============== END Sine Benchmark " << " ==============" << std::endl;
     std::cout << std::endl <<"============== Cosine Benchmark " << " ==============" << std::endl;
     accuracyRangeTestsCos(r);
     accuracyValuesCos<float>();
     accuracyValuesCos<double>();
     speedTestsCos(r);
+    polyAccuracyTests(false);
     std::cout << std::endl <<"============== END Cosine Benchmark " << " ==============" << std::endl;
     return 0;
 }

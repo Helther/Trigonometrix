@@ -375,16 +375,70 @@ template <typename T> constexpr T degToRad(T value) noexcept
 {
     return value * DEG_TO_RAD;
 }
-// TODO provide better interface for accuracy
-template <typename T, bool polyApprox = true, unsigned accuracyDegree = accuracy<T>>
-constexpr T sinRad(T x) noexcept
+
+template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
+constexpr T cosRad(T x) noexcept
 {
     const auto range = polyApprox ? HALF_PI : QUARTER_PI;
     const auto invRange = polyApprox ? INV_HALF_PI : INV_QUARTER_PI;
     const ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, range, invRange);
-
     if constexpr (polyApprox)
     {
+        if (res.noReduciton)
+            return _Internal::cos_inner_polinomial<T,accuracyDegree>(x);
+        const int sign = res.quad >= 0 ? 1 : -1;
+        x *= sign;
+        switch ((res.quad*sign) & Pi3by2_2Pi)
+        {
+        case Zero_Pi2:
+            return _Internal::cos_inner_polinomial<T,accuracyDegree>(x);
+        case Pi2_Pi:
+            return -_Internal::sin_inner_polinomial<T,accuracyDegree>(x);
+        case Pi_Pi3by2:
+            return -_Internal::cos_inner_polinomial<T,accuracyDegree>(x);
+        case Pi3by2_2Pi:
+            return _Internal::sin_inner_polinomial<T,accuracyDegree>(x);
+        }
+    }
+    else
+    {
+        const int sign = x >= 0 ? 1 : -1; // get sign and negate it, so table won't out of range
+        x *= sign;
+        if (res.noReduciton)
+            return _Internal::cos_inner_table(x);
+        const int quad = res.quad >= 0 ? res.quad : -res.quad;
+        switch (quad & PiPi3by4_2Pi)
+        {
+        case Zero_Pi4:
+             return _Internal::cos_inner_table(x);
+        case Pi4_Pi2:
+            return _Internal::sin_inner_table(QUARTER_PI - x);
+        case Pi2_Pi3by4:
+            return -_Internal::sin_inner_table(x);
+        case Pi3by4_Pi:
+            return -_Internal::cos_inner_table(QUARTER_PI - x);
+        case PiZero_Pi4:
+            return -_Internal::cos_inner_table(x);
+        case PiPi4_Pi2:
+            return -_Internal::sin_inner_table(QUARTER_PI - x);
+        case PiPi2_Pi3by4:
+            return _Internal::sin_inner_table(x);
+        case PiPi3by4_2Pi:
+            return _Internal::cos_inner_table(QUARTER_PI - x);
+        }
+    }
+    assert(false && "invalid range");
+}
+
+// TODO provide better interface for accuracy
+template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
+constexpr T sinRad(T x) noexcept
+{
+    if constexpr (polyApprox)
+    {
+        const auto range = polyApprox ? HALF_PI : QUARTER_PI;
+        const auto invRange = polyApprox ? INV_HALF_PI : INV_QUARTER_PI;
+        const ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, range, invRange);
         if (res.noReduciton)
             return _Internal::sin_inner_polinomial<T,accuracyDegree>(x);
         const int sign = res.quad >= 0 ? 1 : -1;
@@ -403,68 +457,18 @@ constexpr T sinRad(T x) noexcept
     }
     else
     {
-        const int sign = x >= 0 ? 1 : -1; // get sign and negate it, so table won't out of range
-        x *= sign;
-        if (res.noReduciton)
-            return sign*_Internal::sin_inner_table(x);
-        const int quad = res.quad >= 0 ? res.quad : -res.quad;
-        switch (quad & PiPi3by4_2Pi)
-        {
-        case Zero_Pi4:
-             return sign*_Internal::sin_inner_table(x);
-        case Pi4_Pi2:
-            return sign*_Internal::cos_inner_table(QUARTER_PI - x);
-        case Pi2_Pi3by4:
-            return sign*_Internal::cos_inner_table(x);
-        case Pi3by4_Pi:
-            return sign*_Internal::sin_inner_table(QUARTER_PI - x);
-        case PiZero_Pi4:
-            return -sign*_Internal::sin_inner_table(x);
-        case PiPi4_Pi2:
-            return -sign*_Internal::cos_inner_table(QUARTER_PI - x);
-        case PiPi2_Pi3by4:
-            return -sign*_Internal::cos_inner_table(x);
-        case PiPi3by4_2Pi:
-            return -sign*_Internal::sin_inner_table(QUARTER_PI - x);
-        }
+        return cosRad(HALF_PI - x);
     }
     assert(false && "invalid range");
 }
 
-template <typename T, bool polyApprox = true, unsigned accuracyDegree = accuracy<T>>
+template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
 constexpr T sin(T degrees) noexcept
 {
     return sinRad(degToRad(degrees));
 }
 
-template <typename T, bool polyApprox = true, unsigned accuracyDegree = accuracy<T>>
-constexpr T cosRad(T x) noexcept
-{
-    if constexpr (polyApprox)
-    {
-        const ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, HALF_PI, INV_HALF_PI);
-
-        if (res.noReduciton)
-            return _Internal::sin_inner_polinomial<T,accuracyDegree>(x);
-        const int sign = res.quad >= 0 ? 1 : -1;
-        x *= sign;
-        switch ((res.quad*sign) & Pi3by2_2Pi)
-        {
-        case Zero_Pi2:
-            return _Internal::cos_inner_polinomial<T,accuracyDegree>(x);
-        case Pi2_Pi:
-            return -_Internal::sin_inner_polinomial<T,accuracyDegree>(x);
-        case Pi_Pi3by2:
-            return -_Internal::cos_inner_polinomial<T,accuracyDegree>(x);
-        case Pi3by2_2Pi:
-            return _Internal::sin_inner_polinomial<T,accuracyDegree>(x);
-        }
-    }
-    else
-        return sinRad(T(x + HALF_PI));
-}
-
-template <typename T, bool polyApprox = true, unsigned accuracyDegree = accuracy<T>>
+template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
 constexpr T cos(T degrees) noexcept
 {
     return cosRad(degToRad(degrees));

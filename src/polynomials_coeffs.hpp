@@ -11,7 +11,7 @@ inline constexpr int POLIES_COUNT = 8;
 inline constexpr int FP_ERROR_DEGREE_INDEX = 3;
 inline constexpr int DP_ERROR_DEGREE_INDEX = 7;
 using PolyData = const double*;
-using PolyIndex = long unsigned int;
+using PolyIndex = std::size_t;
 
 inline constexpr std::array<double,2> SIN_DEGREE_3 =
 {0.992787728983164233059810507773856991,// 1-degree
@@ -151,8 +151,8 @@ inline constexpr std::array<std::tuple<PolyIndex,PolyData>,POLIES_COUNT> COS_POL
     std::make_tuple(COS_DEGREE_18.size(), COS_DEGREE_18.data())
 };
 
-template <typename T> constexpr unsigned accuracy = DP_ERROR_DEGREE_INDEX;
-template <> inline constexpr unsigned accuracy<float> = FP_ERROR_DEGREE_INDEX;
-template <> inline constexpr unsigned accuracy<double> = DP_ERROR_DEGREE_INDEX;
-template <> inline constexpr unsigned accuracy<int32_t> = FP_ERROR_DEGREE_INDEX;
-template <> inline constexpr unsigned accuracy<int64_t> = DP_ERROR_DEGREE_INDEX;
+template <typename T> constexpr std::size_t accuracy = DP_ERROR_DEGREE_INDEX;
+template <> inline constexpr std::size_t accuracy<float> = FP_ERROR_DEGREE_INDEX;
+template <> inline constexpr std::size_t accuracy<double> = DP_ERROR_DEGREE_INDEX;
+template <> inline constexpr std::size_t accuracy<int32_t> = FP_ERROR_DEGREE_INDEX;
+template <> inline constexpr std::size_t accuracy<int64_t> = DP_ERROR_DEGREE_INDEX;
