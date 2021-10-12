@@ -1,5 +1,5 @@
 /*
-// TODO describe header
+// FIle contains
 */
 #pragma once
 
@@ -14,19 +14,18 @@
 #include <limits>
 
 
-inline constexpr auto DEG_TO_RAD = 1.7453292519943295769236907684886E-3;
+inline constexpr auto DEG_TO_RAD = 1.7453292519943295769236907684886E-2;
 inline constexpr auto HALF_PI = 1.5707963267948966192;
 inline constexpr auto QUARTER_PI = 7.853981633974483096E-1;
 inline constexpr auto INV_QUARTER_PI = 1 / QUARTER_PI;
 inline constexpr auto INV_HALF_PI = 1 / HALF_PI;
 inline constexpr auto TWO_PI = 6.2831853071795864769;
-inline constexpr auto RANGE_REDUCTION_SWITCH = std::numeric_limits<float>::max();// TODO devise
+// value that represents the moment when argument becomes too large standart reduction
+inline constexpr auto RANGE_REDUCTION_SWITCH = std::numeric_limits<float>::max();// TODO devise fitting change point
 
 namespace Trigonometrix
 {
-/*
-*
-*/
+
 enum Octets
 {
     Zero_Pi4     = 0,
@@ -47,15 +46,16 @@ enum Quads
     Pi3by2_2Pi = 3
 };
 
-//============================== INTERNAL ==============================//
-struct alignas (alignof (int)) ReductionRes
-{
-    int quad;
-    bool noReduciton;
-};
-
+//=================================== INTERNAL ===============================//
     namespace _Internal
     {
+
+    struct alignas (alignof (int)) ReductionRes
+    {
+        int quad;
+        bool noReduciton;
+    };
+
     inline constexpr uint32_t two_over_pi[] = { 0x0, 0x28be60db, 0x24e44152, 0x27f09d5f, 0x11f534dd, 0x3036d8a5, 0x1993c439, 0x107f945, 0x23abdebb, 0x31586dc9,
     0x6e3a424, 0x374b8019, 0x92eea09, 0x3464873f, 0x21deb1cb, 0x4a69cfb, 0x288235f5, 0xbaed121, 0xe99c702, 0x1ad17df9,
     0x13991d6, 0xe60d4ce, 0x1f49c845, 0x3e2ef7e4, 0x283b1ff8, 0x25fff781, 0x1980fef2, 0x3c462d68, 0xa6d1f6d, 0xd9fb3c9,
@@ -139,7 +139,7 @@ struct alignas (alignof (int)) ReductionRes
     // KronosGroup SYCL implementation
     template<typename T> constexpr ReductionRes payneHayekRangeReduce(T& arg) noexcept
     {
-				if (std::abs(arg) <= HALF_PI)
+                if ((arg >= 0 ? arg : -arg) <= HALF_PI)
             return {0, true};
 
         double x = arg;
@@ -239,10 +239,10 @@ struct alignas (alignof (int)) ReductionRes
         return {int(epx.sign*N), false};
     }
 
-    // simple fast additive reduction with possible loss of accuracy
+    // simple fast additive reduction with possible loss of accuracy for large arguments
     template<typename T> constexpr ReductionRes addRangeReduce(T& arg, double maxRange, double invMaxRange) noexcept
     {
-        if (std::abs(arg) <= maxRange)
+        if ((arg >= 0 ? arg : -arg) <= maxRange)
             return {0, true};
 
         const int quad = (int)(arg * invMaxRange);
@@ -258,7 +258,7 @@ struct alignas (alignof (int)) ReductionRes
         const T sign = x > 0 ? 1 : -1;
         return (int64_t)(x + sign*h);
 		}
-
+    //======== LU table implementation with range folding to 0...Pi/4 range ==//
     constexpr float sin_inner_table(float x) noexcept
     {
         if (x != QUARTER_PI)
@@ -285,16 +285,6 @@ struct alignas (alignof (int)) ReductionRes
         const int gradIndex = (diff < 0 && index > 0) ? index-1 : index;
 
         return SIN_TABLE_D[index] + diff * SIN_GRAD_D[gradIndex];
-    }
-
-    constexpr float sin_inner_table(int32_t x) noexcept
-    {
-        return sin_inner_table(float(x));
-    }
-
-    constexpr double sin_inner_table(int64_t x) noexcept
-    {
-        return sin_inner_table(double(x));
     }
 
     constexpr float cos_inner_table(float x) noexcept
@@ -324,17 +314,7 @@ struct alignas (alignof (int)) ReductionRes
 
         return COS_TABLE_D[index] + diff * COS_GRAD_D[gradIndex];
     }
-
-    constexpr float cos_inner_table(int32_t x) noexcept
-    {
-        return cos_inner_table(float(x));
-    }
-
-    constexpr double cos_inner_table(int64_t x) noexcept
-    {
-        return cos_inner_table(double(x));
-    }
-
+//============================= Polynomial implementation ====================//
     template <typename T, unsigned accuracyDegree>
     constexpr T sin_inner_polinomial(T x) noexcept
     {
@@ -364,7 +344,7 @@ struct alignas (alignof (int)) ReductionRes
     }
 
 }
-//======================= END INTERNAL ==========================//
+//============================= END INTERNAL =================================//
 
 template <typename T> constexpr T radToDeg(T value) noexcept
 {
@@ -376,18 +356,36 @@ template <typename T> constexpr T degToRad(T value) noexcept
     return value * DEG_TO_RAD;
 }
 
+//================================== Interface ===============================//
+/* polyApprox - defines implementation
+* TODO better interface is needed
+* accuracyDegree - integer value in range 0..7 that scales up the accuracy
+* of the approximation (index for number of terms for polinomial)
+*
+* accuracy map(relation of index to number of accurate digits in fractional part of the result):
+* 0 - 3 (0.00049 average absolute error)
+* 1 - 5
+* 2 - 6
+* 3 - 7
+* 4 - 9
+* 5 - 11
+* 6 - 13
+* 7 - 15
+*/
 template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
-constexpr T cosRad(T x) noexcept
+constexpr T cos(T x) noexcept requires(std::is_floating_point<T>::value)
 {
+    //static_assert (accuracyDegree >, );
     const auto range = polyApprox ? HALF_PI : QUARTER_PI;
     const auto invRange = polyApprox ? INV_HALF_PI : INV_QUARTER_PI;
-    const ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, range, invRange);
+    const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, range, invRange);
     if constexpr (polyApprox)
     {
         if (res.noReduciton)
             return _Internal::cos_inner_polinomial<T,accuracyDegree>(x);
         const int sign = res.quad >= 0 ? 1 : -1;
         x *= sign;
+        // split function period into 4 equal parts shifted by Pi/2
         switch ((res.quad*sign) & Pi3by2_2Pi)
         {
         case Zero_Pi2:
@@ -407,6 +405,7 @@ constexpr T cosRad(T x) noexcept
         if (res.noReduciton)
             return _Internal::cos_inner_table(x);
         const int quad = res.quad >= 0 ? res.quad : -res.quad;
+        // split function period into 8 equal parts shifted by Pi/4
         switch (quad & PiPi3by4_2Pi)
         {
         case Zero_Pi4:
@@ -430,15 +429,14 @@ constexpr T cosRad(T x) noexcept
     assert(false && "invalid range");
 }
 
-// TODO provide better interface for accuracy
 template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
-constexpr T sinRad(T x) noexcept
+constexpr T sin(T x) noexcept requires(std::is_floating_point<T>::value)
 {
     if constexpr (polyApprox)
     {
         const auto range = polyApprox ? HALF_PI : QUARTER_PI;
         const auto invRange = polyApprox ? INV_HALF_PI : INV_QUARTER_PI;
-        const ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, range, invRange);
+        const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, range, invRange);
         if (res.noReduciton)
             return _Internal::sin_inner_polinomial<T,accuracyDegree>(x);
         const int sign = res.quad >= 0 ? 1 : -1;
@@ -457,21 +455,23 @@ constexpr T sinRad(T x) noexcept
     }
     else
     {
-        return cosRad(HALF_PI - x);
+        return cos(HALF_PI - x);
     }
     assert(false && "invalid range");
 }
 
+
 template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
-constexpr T sin(T degrees) noexcept
+constexpr T cosDeg(T degrees) noexcept requires(std::is_floating_point<T>::value)
 {
-    return sinRad(degToRad(degrees));
+    return cos(degToRad(degrees));
 }
 
 template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
-constexpr T cos(T degrees) noexcept
+constexpr T sinDeg(T degrees) noexcept requires(std::is_floating_point<T>::value)
 {
-    return cosRad(degToRad(degrees));
+    return sin(degToRad(degrees));
 }
 
 }
+

@@ -1,5 +1,10 @@
 #pragma once
-
+/*
+ * This file stores utilities for lookup teable generation and writing to a
+ * header, depending on desired accuracy of approximation
+ *
+ * TODO add constexpr in-place lut generator
+*/
 #include <iostream>
 #include <ios>
 #include <fstream>
@@ -19,12 +24,13 @@ inline constexpr auto FT_COS_NAME = "COS_TABLE_F";
 inline constexpr auto DT_COS_NAME = "COS_TABLE_D";
 inline constexpr auto FT_COS_GRAD_NAME = "COS_GRAD_F";
 inline constexpr auto DT_COS_GRAD_NAME = "COS_GRAD_D";
+// numbers of significant digits for precision
 inline constexpr int FLOAT_PREC_DIGITS = 12;
 inline constexpr int DOUBLE_PREC_DIGITS = 19;
 
 using namespace std;
 
-
+// class for redicrecting std output to file
 class FileRedirectStream
 {
 public:
@@ -147,7 +153,7 @@ static void generateSinCosTable()
     if constexpr (is_same<T, float>())
         size = tableSizeFromAcc(1E-9);
     else
-    size = tableSizeFromAcc(1E-11);// should be 1E-17 actually, but it would be too enormous
+        size = tableSizeFromAcc(1E-11);// should be 1E-17 actually, but the table would be too enormous
     assert(size > 0 && "invalid table size");
     const char* fileName;
     int precision;

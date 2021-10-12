@@ -62,7 +62,6 @@ To run built tests
 ```
 
 ## TODO: 
-* Update documentation
 * Add comparison tests with other libraries
 * add constexpr generation and usage of lookup tables of variable sizes
 * Add tests for FMA contracted versions of approximations

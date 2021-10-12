@@ -3,16 +3,25 @@
 #include <array>
 #include <tuple>
 /*
- *
- *
+ * This file stores sets of coeffients for minimax polynomial approximation
+ * with different number of terms for variable accuracy. Values were calculated
+ * to accurately approximate the funtions over the range 0..Pi/2, and optimized
+ * further for relative error reduction. Degrees of polinomials were chosen
+ * accuracy wise, in range from first meaningfull to the number that would cover
+ * floating point accuracy.
+ * Coeffients values are provided here:
+ * https://gist.github.com/publik-void/067f7f2fef32dbe5c27d6e215f824c91
 */
 
 inline constexpr int POLIES_COUNT = 8;
-inline constexpr int FP_ERROR_DEGREE_INDEX = 3;
+// indexes for approximation, that should suffice floating point accuracy
+inline constexpr int FP_ERROR_DEGREE_INDEX = 5;
 inline constexpr int DP_ERROR_DEGREE_INDEX = 7;
 using PolyData = const double*;
 using PolyIndex = std::size_t;
 
+
+// odd coeffs for sine
 inline constexpr std::array<double,2> SIN_DEGREE_3 =
 {0.992787728983164233059810507773856991,// 1-degree
  -0.146210290215383029232877806264248677};// 3-degree...
@@ -63,7 +72,7 @@ inline constexpr std::array<double,9> SIN_DEGREE_17 =
  2.75573192101527564362114785169078252E-6,
  -2.50521067982746148969440582709985054E-8,
  1.60589364903732230834314189302038183E-10,
- 7.64291780693694318128770390349958602E-13,
+ -7.64291780693694318128770390349958602E-13,
  2.72047909631134875287705126898888084E-15};
 
 inline constexpr std::array<std::tuple<PolyIndex,PolyData>,POLIES_COUNT> SIN_POLIES =
@@ -78,6 +87,7 @@ inline constexpr std::array<std::tuple<PolyIndex,PolyData>,POLIES_COUNT> SIN_POL
     std::make_tuple(SIN_DEGREE_17.size(), SIN_DEGREE_17.data())
 };
 
+// even coeffs for cosine
 inline constexpr std::array<double,3> COS_DEGREE_4 =
 {0.997372645040477990699027658698347186,
  -0.490966242354240750313919970830772248,
@@ -151,8 +161,7 @@ inline constexpr std::array<std::tuple<PolyIndex,PolyData>,POLIES_COUNT> COS_POL
     std::make_tuple(COS_DEGREE_18.size(), COS_DEGREE_18.data())
 };
 
+// template parameter for setting accuracy
 template <typename T> constexpr std::size_t accuracy = DP_ERROR_DEGREE_INDEX;
 template <> inline constexpr std::size_t accuracy<float> = FP_ERROR_DEGREE_INDEX;
 template <> inline constexpr std::size_t accuracy<double> = DP_ERROR_DEGREE_INDEX;
-template <> inline constexpr std::size_t accuracy<int32_t> = FP_ERROR_DEGREE_INDEX;
-template <> inline constexpr std::size_t accuracy<int64_t> = DP_ERROR_DEGREE_INDEX;

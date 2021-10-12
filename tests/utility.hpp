@@ -196,7 +196,7 @@ void accuracyBench(T start, T range, T step, T(*MeasureFunc)(T), T(*ControlFunc)
     std::cout << "max abs err: " << absoluteMaxError(measure, control) << std::endl;
     std::cout << "max rel err: " << relativeMaxError(measure, control) << std::endl;
 }
-// TODO add args for choo distribution
+
 template<typename T, typename RandDistr = std::uniform_real_distribution<T>>
 void accuracyBenchRand(T min, T max, int size, T(*MeasureFunc)(T), T(*ControlFunc)(T), std::random_device& rnd, const char* name)
 {
