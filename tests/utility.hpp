@@ -189,7 +189,7 @@ void accuracyBench(T start, T range, T step, T(*MeasureFunc)(T), T(*ControlFunc)
         measure.push_back(MeasureFunc(i));
         control.push_back(ControlFunc(i));
     }
-    std::cout << name << "; number of passes " << std::to_string(count) << std::endl;
+    std::cout << " number of passes " << std::to_string(count) << std::endl;
     std::cout << "abs err: " << absoluteAverageError(measure, control) << std::endl;
     std::cout << "rel err: " << relativeAverageError(measure, control) << std::endl;
     std::cout << "rms err: " << rmsError(measure, control) << std::endl;
@@ -214,7 +214,7 @@ void accuracyBenchRand(T min, T max, int size, T(*MeasureFunc)(T), T(*ControlFun
         measure[i] = (MeasureFunc(arg));
         control[i] = (ControlFunc(arg));
     }
-    std::cout << name << "; number of passes " << std::to_string(count) << std::endl;
+    std::cout << " number of passes " << std::to_string(count) << std::endl;
     std::cout << "abs err: " << absoluteAverageError(measure, control) << std::endl;
     std::cout << "rel err: " << relativeAverageError(measure, control) << std::endl;
     std::cout << "rms err: " << rmsError(measure, control) << std::endl;
@@ -234,7 +234,7 @@ void speedBench(T start, T range, T step, T(*MeasureFunc)(T), T(*ControlFunc)(T)
         MeasureFunc(i);
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<TimeScale>(endTime - startTime);
-    std::cout << "Trigonometrix duration in mS: " << duration.count() << std::endl;
+    std::cout << "Trigonometrix duration in " << TimeScaleStr<TimeScale> << ": " <<  duration.count() << std::endl;
 
     startTime = std::chrono::high_resolution_clock::now();
     for(T i = start; i < range; i+=step)
@@ -269,5 +269,5 @@ void speedBenchRand(T min, T max, int size, T(*MeasureFunc)(T), T(*ControlFunc)(
         ControlFunc(i);
     endTime = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<TimeScale>(endTime - startTime);
-    std::cout << "Std duration in mS: " << duration.count() << std::endl;
+    std::cout << "Std duration in " << TimeScaleStr<TimeScale> << ": " << duration.count() << std::endl;
 }

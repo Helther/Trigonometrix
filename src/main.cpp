@@ -1,4 +1,5 @@
 #include "trigonometry.hpp"
+#include <iostream>
 
 int main()
 {

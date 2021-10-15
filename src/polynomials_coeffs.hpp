@@ -160,8 +160,12 @@ inline constexpr std::array<std::tuple<PolyIndex,PolyData>,POLIES_COUNT> COS_POL
     std::make_tuple(COS_DEGREE_16.size(), COS_DEGREE_16.data()),
     std::make_tuple(COS_DEGREE_18.size(), COS_DEGREE_18.data())
 };
+inline constexpr std::size_t SIN_COS_ACC_MAP_COUNT = 11;
+// map of number of required accurate fraction digits to fitting polynom index for sine and cosine approx.
+inline constexpr std::array<std::size_t,SIN_COS_ACC_MAP_COUNT> SIN_COS_ACC_MAP =
+{1,2,3,3,4,4,5,6,6,7,7};
 
-// template parameter for setting accuracy
-template <typename T> constexpr std::size_t accuracy = DP_ERROR_DEGREE_INDEX;
+// accuracy template parameter default values
+template <typename T> constexpr std::size_t accuracy = DP_ERROR_DEGREE_INDEX; // by default the most accurate
 template <> inline constexpr std::size_t accuracy<float> = FP_ERROR_DEGREE_INDEX;
 template <> inline constexpr std::size_t accuracy<double> = DP_ERROR_DEGREE_INDEX;

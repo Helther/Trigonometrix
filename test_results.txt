@@ -1,124 +1,124 @@
 ============== Sine Benchmark  ==============
 
 =========== Accuracy Benchmark float table implementation ===========
-float table implementation; number of passes 11821386
-abs err: 8.87126e-13
-rel err: 1.35995e-09
-rms err: 4.8227e-09
+ number of passes 3196593
+abs err: 6.40166e-14
+rel err: 2.30304e-09
+rms err: 4.88385e-09
 max abs err: 5.96046e-08
-max rel err: 8.04663e-06
+max rel err: 0.000672817
 
 =========== Accuracy Benchmark double table implementation ===========
-double table implementation; number of passes 12566371
-abs err: -1.04555e-15
-rel err: 7.96573e-08
-rms err: 1.71448e-10
-max abs err: 1.35134e-09
+ number of passes 3141593
+abs err: 4.1575e-15
+rel err: 3.1912e-07
+rms err: 1.90939e-10
+max abs err: 1.59052e-09
 max rel err: 1
 
 =========== Accuracy Benchmark float test polynomial implementation ===========
-float test polynomial implementation; number of passes 11821386
-abs err: 1.23134e-10
-rel err: 0.00394591
-rms err: 0.000574884
-max abs err: 0.00200977
-max rel err: 921.033
+ number of passes 3196593
+abs err: 5.78471e-13
+rel err: 7.01836e-06
+rms err: 1.16714e-06
+max abs err: 8.58307e-06
+max rel err: 4.42068
 
 =========== Accuracy Benchmark double test polynomial implementation ===========
-double test polynomial implementation; number of passes 12566371
-abs err: 2.06382e-17
-rel err: 7.964e-08
-rms err: 1.71445e-10
-max abs err: 1.35134e-09
+ number of passes 3141593
+abs err: -5.12155e-17
+rel err: 3.19119e-07
+rms err: 1.90948e-10
+max abs err: 1.59052e-09
 max rel err: 1
 
 =========== Accuracy Benchmark Random float RAND table implementation ============
-float RAND table implementation; number of passes 1000000
-abs err: -1.19574e-11
-rel err: 1.3544e-09
-rms err: 4.82974e-09
+ number of passes 1000000
+abs err: -2.75293e-13
+rel err: 3.14116e-09
+rms err: 4.87592e-09
 max abs err: 5.96046e-08
-max rel err: 4.17233e-07
+max rel err: 0.00134981
 
 =========== Accuracy Benchmark Random double RAND table implementation ============
-double RAND table implementation; number of passes 1000000
-abs err: -2.20704e-13
-rel err: 6.10433e-11
-rms err: 1.72147e-10
-max abs err: 1.35125e-09
-max rel err: 4.84553e-07
+ number of passes 1000000
+abs err: -1.44382e-14
+rel err: 5.52862e-10
+rms err: 1.90115e-10
+max abs err: 1.58806e-09
+max rel err: 4.11583e-05
 
 =========== Accuracy Benchmark Random float test RAND polynomial implementation ============
-float test RAND polynomial implementation; number of passes 1000000
-abs err: -5.37636e-07
-rel err: 0.00392502
-rms err: 0.000595563
-max abs err: 0.0019711
-max rel err: 139.335
+ number of passes 1000000
+abs err: 1.0608e-09
+rel err: 4.99701e-06
+rms err: 1.16648e-06
+max abs err: 8.52346e-06
+max rel err: 0.740977
 
 =========== Accuracy Benchmark Random double test RAND polynomial implementation ============
-double test RAND polynomial implementation; number of passes 1000000
-abs err: 1.55259e-14
-rel err: 6.5376e-11
-rms err: 1.71385e-10
-max abs err: 1.34569e-09
-max rel err: 6.71243e-06
+ number of passes 1000000
+abs err: 2.64358e-14
+rel err: 6.82852e-10
+rms err: 1.90319e-10
+max abs err: 1.59053e-09
+max rel err: 0.000142601
 
 ============== 0, Pi/4, Pi/2,...2*Pi Accuracy range test ==============
 
 =========== Accuracy Benchmark table implementation ===========
-table implementation; number of passes 9
-abs err: 2.07242e-15
-rel err: 5.28991e-07
-rms err: 5.98535e-13
-max abs err: 1.27898e-12
-max rel err: 4.23193e-06
+ number of passes 9
+abs err: 1.04854e-15
+rel err: 6.43879e-05
+rms err: 7.33301e-11
+max abs err: 1.55561e-10
+max rel err: 0.000515103
 
 =========== Accuracy Benchmark polynomial implementation ===========
-polynomial implementation; number of passes 9
-abs err: 6.4873e-06
-rel err: 23.9811
-rms err: 1.9413e-05
-max abs err: 5.82387e-05
-max rel err: 190.849
+ number of passes 9
+abs err: -1.32013e-07
+rel err: 0.467114
+rms err: 3.76696e-07
+max abs err: -1.12852e-06
+max rel err: 3.73691
 
 ============== 0, Pi/4, Pi/2,...2*Pi Accuracy range test ==============
 
 =========== Accuracy Benchmark table implementation ===========
-table implementation; number of passes 8
-abs err: -3.20176e-13
-rel err: 1470.05
-rms err: 6.30359e-13
-max abs err: 1.11022e-16
-max rel err: 10290.3
+ number of passes 8
+abs err: 3.8892e-11
+rel err: 181465
+rms err: 7.77807e-11
+max abs err: 1.55561e-10
+max rel err: 1.27025e+06
 
 =========== Accuracy Benchmark polynomial implementation ===========
-polynomial implementation; number of passes 8
-abs err: 1.68919e-10
+ number of passes 8
+abs err: -1.98817e-10
 rel err: 0.142857
-rms err: 4.77774e-10
-max abs err: 1.35135e-09
+rms err: 5.62341e-10
+max abs err: 1.21014e-14
 max rel err: 1
 
 =========== Speed Benchmark float test table implementation ============
-number of passes 11821386
-Trigonometrix duration in mS: 124
-Std duration in mS: 98
+number of passes 3196593
+Trigonometrix duration in mS: 33
+Std duration in mS: 27
 
 =========== Speed Benchmark double test table implementation ============
-number of passes 12566371
-Trigonometrix duration in mS: 113
-Std duration in mS: 124
+number of passes 3141593
+Trigonometrix duration in mS: 29
+Std duration in mS: 31
 
 =========== Speed Benchmark float test polynomial implementation ============
-number of passes 11821386
-Trigonometrix duration in mS: 161
-Std duration in mS: 98
+number of passes 3196593
+Trigonometrix duration in mS: 53
+Std duration in mS: 27
 
 =========== Speed Benchmark double test polynomial implementation ============
-number of passes 12566371
-Trigonometrix duration in mS: 108
-Std duration in mS: 124
+number of passes 3141593
+Trigonometrix duration in mS: 27
+Std duration in mS: 31
 
 =========== Speed Benchmark Random float table implementation ============
 number of passes 1000000
@@ -127,31 +127,23 @@ Std duration in mS: 12
 
 =========== Speed Benchmark Random double table implementation ============
 number of passes 1000000
-Trigonometrix duration in mS: 15
-Std duration in mS: 20
+Trigonometrix duration in mS: 16
+Std duration in mS: 18
 
 =========== Speed Benchmark Random float polynomial implementation ============
 number of passes 1000000
-Trigonometrix duration in mS: 17
+Trigonometrix duration in mS: 19
 Std duration in mS: 12
 
 =========== Speed Benchmark Random double polynomial implementation ============
 number of passes 1000000
 Trigonometrix duration in mS: 15
-Std duration in mS: 20
+Std duration in mS: 18
 
 ============== Polinomials Accuracy test by number of terms ==============
 
-=========== Accuracy Benchmark sin, number of terms: 2 ===========
-sin, number of terms: 2; number of passes 629
-abs err: -0.000224056
-rel err: 1.38245
-rms err: 0.31856
-max abs err: 1.39463
-max rel err: 329.581
-
 =========== Accuracy Benchmark sin, number of terms: 3 ===========
-sin, number of terms: 3; number of passes 629
+ number of passes 629
 abs err: 3.43493e-05
 rel err: 0.0991522
 rms err: 0.0342035
@@ -159,7 +151,7 @@ max abs err: 0.178869
 max rel err: 26.6529
 
 =========== Accuracy Benchmark sin, number of terms: 4 ===========
-sin, number of terms: 4; number of passes 629
+ number of passes 629
 abs err: -2.24195e-06
 rel err: 0.00525822
 rms err: 0.00181079
@@ -167,7 +159,7 @@ max abs err: 0.0106184
 max rel err: 1.29689
 
 =========== Accuracy Benchmark sin, number of terms: 5 ===========
-sin, number of terms: 5; number of passes 629
+ number of passes 629
 abs err: 8.18785e-08
 rel err: 0.000143925
 rms err: 5.70684e-05
@@ -175,7 +167,7 @@ max abs err: 0.000371701
 max rel err: 0.0361013
 
 =========== Accuracy Benchmark sin, number of terms: 6 ===========
-sin, number of terms: 6; number of passes 629
+ number of passes 629
 abs err: -1.9177e-09
 rel err: 2.67612e-06
 rms err: 1.19337e-06
@@ -183,7 +175,7 @@ max abs err: 8.29447e-06
 max rel err: 0.000681198
 
 =========== Accuracy Benchmark sin, number of terms: 7 ===========
-sin, number of terms: 7; number of passes 629
+ number of passes 629
 abs err: 3.13107e-11
 rel err: 3.60308e-08
 rms err: 1.77701e-08
@@ -191,7 +183,7 @@ max abs err: 1.33675e-07
 max rel err: 9.2914e-06
 
 =========== Accuracy Benchmark sin, number of terms: 8 ===========
-sin, number of terms: 8; number of passes 629
+ number of passes 629
 abs err: -3.7709e-13
 rel err: 3.67619e-10
 rms err: 1.98041e-10
@@ -199,103 +191,103 @@ max abs err: 1.54991e-09
 max rel err: 9.59071e-08
 
 =========== Accuracy Benchmark sin, number of terms: 9 ===========
-sin, number of terms: 9; number of passes 629
-abs err: 3.53052e-13
-rel err: 4.65471e-11
-rms err: 1.77056e-10
-max abs err: 1.34108e-09
-max rel err: 1.34108e-09
+ number of passes 629
+abs err: 3.48949e-15
+rel err: 2.9417e-12
+rms err: 1.71404e-12
+max abs err: 1.43464e-11
+max rel err: 7.75459e-10
 
 ============== END Sine Benchmark  ==============
 
 ============== Cosine Benchmark  ==============
 
 =========== Accuracy Benchmark float table implementation ===========
-float table implementation; number of passes 11821386
-abs err: 8.87126e-13
-rel err: 1.35995e-09
-rms err: 4.8227e-09
+ number of passes 3196593
+abs err: 6.40166e-14
+rel err: 2.30304e-09
+rms err: 4.88385e-09
 max abs err: 5.96046e-08
-max rel err: 8.04663e-06
+max rel err: 0.000672817
 
 =========== Accuracy Benchmark double table implementation ===========
-double table implementation; number of passes 12566371
-abs err: -1.04555e-15
-rel err: 7.96573e-08
-rms err: 1.71448e-10
-max abs err: 1.35134e-09
+ number of passes 3141593
+abs err: 4.1575e-15
+rel err: 3.1912e-07
+rms err: 1.90939e-10
+max abs err: 1.59052e-09
 max rel err: 1
 
 =========== Accuracy Benchmark float test polynomial implementation ===========
-float test polynomial implementation; number of passes 11821386
-abs err: 1.23134e-10
-rel err: 0.00394591
-rms err: 0.000574884
-max abs err: 0.00200977
-max rel err: 921.033
+ number of passes 3196593
+abs err: 5.78471e-13
+rel err: 7.01836e-06
+rms err: 1.16714e-06
+max abs err: 8.58307e-06
+max rel err: 4.42068
 
 =========== Accuracy Benchmark double test polynomial implementation ===========
-double test polynomial implementation; number of passes 12566371
-abs err: 2.06382e-17
-rel err: 7.964e-08
-rms err: 1.71445e-10
-max abs err: 1.35134e-09
+ number of passes 3141593
+abs err: -5.12155e-17
+rel err: 3.19119e-07
+rms err: 1.90948e-10
+max abs err: 1.59052e-09
 max rel err: 1
 
 =========== Accuracy Benchmark Random float RAND table implementation ============
-float RAND table implementation; number of passes 1000000
-abs err: 4.99875e-13
-rel err: 1.33425e-09
-rms err: 4.77024e-09
+ number of passes 1000000
+abs err: -2.54858e-12
+rel err: 1.84375e-09
+rms err: 4.84286e-09
 max abs err: 5.96046e-08
-max rel err: 1.49012e-06
+max rel err: 9.89437e-05
 
 =========== Accuracy Benchmark Random double RAND table implementation ============
-double RAND table implementation; number of passes 1000000
-abs err: -2.62239e-13
-rel err: 6.17697e-11
-rms err: 1.71206e-10
-max abs err: 5.75351e-10
-max rel err: 1.47424e-06
+ number of passes 1000000
+abs err: 6.88943e-15
+rel err: 6.56173e-10
+rms err: 1.9093e-10
+max abs err: 1.5902e-09
+max rel err: 8.2965e-05
 
 =========== Accuracy Benchmark Random float test RAND polynomial implementation ============
-float test RAND polynomial implementation; number of passes 1000000
-abs err: 6.44379e-07
-rel err: 0.00373502
-rms err: 0.000596026
-max abs err: 0.00200509
-max rel err: 70.5281
+ number of passes 1000000
+abs err: 5.68466e-10
+rel err: 1.4252e-05
+rms err: 1.16696e-06
+max abs err: 8.58307e-06
+max rel err: 9.84137
 
 =========== Accuracy Benchmark Random double test RAND polynomial implementation ============
-double test RAND polynomial implementation; number of passes 1000000
-abs err: 1.08943e-14
-rel err: 5.79273e-11
-rms err: 1.70807e-10
-max abs err: 1.35121e-09
-max rel err: 6.39719e-07
+ number of passes 1000000
+abs err: 6.7777e-14
+rel err: 4.8894e-10
+rms err: 1.91573e-10
+max abs err: 1.59047e-09
+max rel err: 4.05505e-05
 
 ============== 0, Pi/4, Pi/2,...2*Pi Accuracy range test ==============
 
 =========== Accuracy Benchmark table implementation ===========
-table implementation; number of passes 9
-abs err: -1.40049e-06
-rel err: 0.444446
-rms err: 0.333333
+ number of passes 9
+abs err: 9.86865e-17
+rel err: 0.444444
+rms err: 0.471404
 max abs err: 0.707107
 max rel err: 1
 
 =========== Accuracy Benchmark polynomial implementation ===========
-polynomial implementation; number of passes 9
-abs err: 4.15347e-05
-rel err: 0.222264
-rms err: 0.000124613
-max abs err: 0.00037384
-max rel err: 1
+ number of passes 9
+abs err: -9.47052e-07
+rel err: 9.47052e-07
+rms err: 2.82136e-06
+max abs err: -8.46386e-06
+max rel err: 8.46386e-06
 
 ============== 0, Pi/4, Pi/2,...2*Pi Accuracy range test ==============
 
 =========== Accuracy Benchmark table implementation ===========
-table implementation; number of passes 8
+ number of passes 8
 abs err: 1.58112e-06
 rel err: 0.250004
 rms err: 4.47209e-06
@@ -303,32 +295,32 @@ max abs err: 6.32453e-06
 max rel err: 1
 
 =========== Accuracy Benchmark polynomial implementation ===========
-polynomial implementation; number of passes 8
-abs err: -1.57498e-13
-rel err: 2572.83
-rms err: 4.46083e-13
-max abs err: 4.09672e-14
-max rel err: 20581.7
+ number of passes 8
+abs err: 1.94452e-11
+rel err: 317564
+rms err: 5.49993e-11
+max abs err: 1.55561e-10
+max rel err: 2.54051e+06
 
 =========== Speed Benchmark float test table implementation ============
-number of passes 11821386
-Trigonometrix duration in mS: 123
-Std duration in mS: 99
+number of passes 3196593
+Trigonometrix duration in mS: 34
+Std duration in mS: 27
 
 =========== Speed Benchmark double test table implementation ============
-number of passes 12566371
-Trigonometrix duration in mS: 113
-Std duration in mS: 124
+number of passes 3141593
+Trigonometrix duration in mS: 29
+Std duration in mS: 31
 
 =========== Speed Benchmark float test polynomial implementation ============
-number of passes 11821386
-Trigonometrix duration in mS: 163
-Std duration in mS: 100
+number of passes 3196593
+Trigonometrix duration in mS: 54
+Std duration in mS: 27
 
 =========== Speed Benchmark double test polynomial implementation ============
-number of passes 12566371
-Trigonometrix duration in mS: 107
-Std duration in mS: 124
+number of passes 3141593
+Trigonometrix duration in mS: 27
+Std duration in mS: 32
 
 =========== Speed Benchmark Random float table implementation ============
 number of passes 1000000
@@ -337,83 +329,75 @@ Std duration in mS: 12
 
 =========== Speed Benchmark Random double table implementation ============
 number of passes 1000000
-Trigonometrix duration in mS: 15
-Std duration in mS: 20
+Trigonometrix duration in mS: 16
+Std duration in mS: 19
 
 =========== Speed Benchmark Random float polynomial implementation ============
 number of passes 1000000
-Trigonometrix duration in mS: 18
+Trigonometrix duration in mS: 20
 Std duration in mS: 12
 
 =========== Speed Benchmark Random double polynomial implementation ============
 number of passes 1000000
 Trigonometrix duration in mS: 15
-Std duration in mS: 20
+Std duration in mS: 19
 
 ============== Polinomials Accuracy test by number of terms ==============
 
-=========== Accuracy Benchmark cos, number of terms: 2 ===========
-cos, number of terms: 2; number of passes 629
-abs err: 0.000494988
-rel err: 2.01176
-rms err: 0.317872
-max abs err: 1.39822
-max rel err: 661.175
-
-=========== Accuracy Benchmark cos, number of terms: 3 ===========
-cos, number of terms: 3; number of passes 629
+=========== Accuracy Benchmark cos, number of terms: 4 ===========
+ number of passes 629
 abs err: -5.78258e-05
 rel err: 0.153251
 rms err: 0.0340889
 max abs err: 0.176967
 max rel err: 55.5389
 
-=========== Accuracy Benchmark cos, number of terms: 4 ===========
-cos, number of terms: 4; number of passes 629
+=========== Accuracy Benchmark cos, number of terms: 5 ===========
+ number of passes 629
 abs err: 3.30633e-06
 rel err: 0.00774132
 rms err: 0.00180271
 max abs err: 0.010667
 max rel err: 2.60697
 
-=========== Accuracy Benchmark cos, number of terms: 5 ===========
-cos, number of terms: 5; number of passes 629
+=========== Accuracy Benchmark cos, number of terms: 6 ===========
+ number of passes 629
 abs err: -1.11492e-07
 rel err: 0.000213152
 rms err: 5.67523e-05
 max abs err: 0.000365525
 max rel err: 0.0726435
 
-=========== Accuracy Benchmark cos, number of terms: 6 ===========
-cos, number of terms: 6; number of passes 629
+=========== Accuracy Benchmark cos, number of terms: 7 ===========
+ number of passes 629
 abs err: 2.47549e-09
 rel err: 3.98437e-06
 rms err: 1.1855e-06
 max abs err: 8.34938e-06
 max rel err: 0.00137211
 
-=========== Accuracy Benchmark cos, number of terms: 7 ===========
-cos, number of terms: 7; number of passes 629
+=========== Accuracy Benchmark cos, number of terms: 8 ===========
+ number of passes 629
 abs err: -3.88946e-11
 rel err: 5.39021e-08
 rms err: 1.76346e-08
 max abs err: 1.30656e-07
 max rel err: 1.87343e-05
 
-=========== Accuracy Benchmark cos, number of terms: 8 ===========
-cos, number of terms: 8; number of passes 629
+=========== Accuracy Benchmark cos, number of terms: 9 ===========
+ number of passes 629
 abs err: 4.55056e-13
 rel err: 5.52368e-10
 rms err: 1.96327e-10
 max abs err: 1.56335e-09
 max rel err: 1.93574e-07
 
-=========== Accuracy Benchmark cos, number of terms: 9 ===========
-cos, number of terms: 9; number of passes 629
-abs err: -3.50995e-13
-rel err: 4.76253e-11
-rms err: 1.7567e-10
-max abs err: 1.31071e-09
+=========== Accuracy Benchmark cos, number of terms: 10 ===========
+ number of passes 629
+abs err: -4.07761e-15
+rel err: 4.43748e-12
+rms err: 1.69747e-12
+max abs err: 1.39371e-11
 max rel err: 1.56664e-09
 
 ============== END Cosine Benchmark  ==============

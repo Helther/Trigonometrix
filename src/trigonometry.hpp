@@ -10,8 +10,8 @@
 #include "float_table.hpp"
 #include "double_table.hpp"
 #include "polynomials_coeffs.hpp"
-#include <iostream>
 #include <limits>
+#include <inttypes.h>
 
 
 inline constexpr auto DEG_TO_RAD = 1.7453292519943295769236907684886E-2;
@@ -26,7 +26,7 @@ inline constexpr auto RANGE_REDUCTION_SWITCH = std::numeric_limits<float>::max()
 namespace Trigonometrix
 {
 
-enum Octets
+enum Octants
 {
     Zero_Pi4     = 0,
     Pi4_Pi2      = 1,
@@ -245,9 +245,10 @@ enum Quads
         if ((arg >= 0 ? arg : -arg) <= maxRange)
             return {0, true};
 
-        const int quad = (int)(arg * invMaxRange);
-        arg = arg - (T)(quad * maxRange);
-
+        double temp = arg;// use double for less loss of significance
+        const int quad = (int)(temp * invMaxRange);
+        temp = temp - (double)(quad * maxRange);
+        arg = temp;
         return {quad, false};
     }
 
@@ -359,43 +360,36 @@ template <typename T> constexpr T degToRad(T value) noexcept
 //================================== Interface ===============================//
 /* polyApprox - defines implementation
 * TODO better interface is needed
-* accuracyDegree - integer value in range 0..7 that scales up the accuracy
-* of the approximation (index for number of terms for polinomial)
-*
-* accuracy map(relation of index to number of accurate digits in fractional part of the result):
-* 0 - 3 (0.00049 average absolute error)
-* 1 - 5
-* 2 - 6
-* 3 - 7
-* 4 - 9
-* 5 - 11
-* 6 - 13
-* 7 - 15
+* accuracyDegree - integer value in range 0..10 that scales up the accuracy
+* of the approximation, where value stands for number of digits of accurary required
+* in fractional part of the result (i.e. to get 0.0xx accuracy choose accuracy=1)
 */
 template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
 constexpr T cos(T x) noexcept requires(std::is_floating_point<T>::value)
 {
-    //static_assert (accuracyDegree >, );
+    static_assert (accuracyDegree >= 0 && accuracyDegree < SIN_COS_ACC_MAP_COUNT, "invalid accuracy");
+    if (x == std::numeric_limits<T>::infinity()) // don't try to compute inf and signal a nan
+        return std::numeric_limits<T>::signaling_NaN();
     const auto range = polyApprox ? HALF_PI : QUARTER_PI;
     const auto invRange = polyApprox ? INV_HALF_PI : INV_QUARTER_PI;
     const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, range, invRange);
     if constexpr (polyApprox)
     {
         if (res.noReduciton)
-            return _Internal::cos_inner_polinomial<T,accuracyDegree>(x);
+            return _Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         const int sign = res.quad >= 0 ? 1 : -1;
         x *= sign;
         // split function period into 4 equal parts shifted by Pi/2
         switch ((res.quad*sign) & Pi3by2_2Pi)
         {
         case Zero_Pi2:
-            return _Internal::cos_inner_polinomial<T,accuracyDegree>(x);
+            return _Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         case Pi2_Pi:
-            return -_Internal::sin_inner_polinomial<T,accuracyDegree>(x);
+            return -_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         case Pi_Pi3by2:
-            return -_Internal::cos_inner_polinomial<T,accuracyDegree>(x);
+            return -_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         case Pi3by2_2Pi:
-            return _Internal::sin_inner_polinomial<T,accuracyDegree>(x);
+            return _Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         }
     }
     else
@@ -427,30 +421,32 @@ constexpr T cos(T x) noexcept requires(std::is_floating_point<T>::value)
         }
     }
     assert(false && "invalid range");
+    return x;
 }
 
 template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
 constexpr T sin(T x) noexcept requires(std::is_floating_point<T>::value)
 {
+    static_assert (accuracyDegree >= 0 && accuracyDegree < SIN_COS_ACC_MAP_COUNT, "invalid accuracy");
+    if (x == std::numeric_limits<T>::infinity())
+        return std::numeric_limits<T>::signaling_NaN();
     if constexpr (polyApprox)
     {
-        const auto range = polyApprox ? HALF_PI : QUARTER_PI;
-        const auto invRange = polyApprox ? INV_HALF_PI : INV_QUARTER_PI;
-        const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, range, invRange);
+        const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, HALF_PI, INV_HALF_PI);
         if (res.noReduciton)
-            return _Internal::sin_inner_polinomial<T,accuracyDegree>(x);
+            return _Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         const int sign = res.quad >= 0 ? 1 : -1;
         x *= sign;
         switch ((res.quad*sign) & Pi3by2_2Pi)
         {
         case Zero_Pi2:
-            return sign*_Internal::sin_inner_polinomial<T,accuracyDegree>(x);
+            return sign*_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         case Pi2_Pi:
-            return sign*_Internal::cos_inner_polinomial<T,accuracyDegree>(x);
+            return sign*_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         case Pi_Pi3by2:
-            return -sign*_Internal::sin_inner_polinomial<T,accuracyDegree>(x);
+            return -sign*_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         case Pi3by2_2Pi:
-            return -sign*_Internal::cos_inner_polinomial<T,accuracyDegree>(x);
+            return -sign*_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
         }
     }
     else
@@ -458,19 +454,24 @@ constexpr T sin(T x) noexcept requires(std::is_floating_point<T>::value)
         return cos(HALF_PI - x);
     }
     assert(false && "invalid range");
+    return x;
 }
 
 
 template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
 constexpr T cosDeg(T degrees) noexcept requires(std::is_floating_point<T>::value)
 {
-    return cos(degToRad(degrees));
+    if (degrees == std::numeric_limits<T>::infinity())
+        return std::numeric_limits<T>::signaling_NaN();
+    return cos<T,polyApprox,accuracyDegree>(degToRad(degrees));
 }
 
 template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
 constexpr T sinDeg(T degrees) noexcept requires(std::is_floating_point<T>::value)
 {
-    return sin(degToRad(degrees));
+    if (degrees == std::numeric_limits<T>::infinity())
+        return std::numeric_limits<T>::signaling_NaN();
+    return sin<T,polyApprox,accuracyDegree>(degToRad(degrees));
 }
 
 }

@@ -14,7 +14,7 @@ inline constexpr auto test8 = Trigonometrix::cos<double,true>(M_PI);
 //====================== accuracy and speed tests ============================//
 
 inline constexpr auto runCount = 1000000;
-inline constexpr auto rangeVal = 20000*M_PI;
+inline constexpr auto rangeVal = 5000*M_PI;
 inline constexpr auto stepVal = 0.01;
 inline constexpr auto periodRange = 2*M_PI;
 
@@ -99,39 +99,35 @@ void polyAccuracyTests(bool sin)
     if (sin)
     {
         accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,0>, &std::sin, std::string("sin, number of terms: " +
-                                                                                                        std::to_string(std::get<0>(SIN_POLIES[0]))).c_str());
-        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,1>, &std::sin, std::string("sin, number of terms: " +
                                                                                                         std::to_string(std::get<0>(SIN_POLIES[1]))).c_str());
-        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,2>, &std::sin, std::string("sin, number of terms: " +
+        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,1>, &std::sin, std::string("sin, number of terms: " +
                                                                                                         std::to_string(std::get<0>(SIN_POLIES[2]))).c_str());
-        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,3>, &std::sin, std::string("sin, number of terms: " +
+        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,2>, &std::sin, std::string("sin, number of terms: " +
                                                                                                         std::to_string(std::get<0>(SIN_POLIES[3]))).c_str());
         accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,4>, &std::sin, std::string("sin, number of terms: " +
                                                                                                         std::to_string(std::get<0>(SIN_POLIES[4]))).c_str());
-        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,5>, &std::sin, std::string("sin, number of terms: " +
-                                                                                                        std::to_string(std::get<0>(SIN_POLIES[5]))).c_str());
         accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,6>, &std::sin, std::string("sin, number of terms: " +
-                                                                                                        std::to_string(std::get<0>(SIN_POLIES[6]))).c_str());
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[5]))).c_str());
         accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,7>, &std::sin, std::string("sin, number of terms: " +
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[6]))).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double,true,9>, &std::sin, std::string("sin, number of terms: " +
                                                                                                         std::to_string(std::get<0>(SIN_POLIES[7]))).c_str());
     }
     else
     {
         accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,0>, &std::cos,std::string("cos, number of terms: " +
-                                                                                                       std::to_string(std::get<0>(COS_POLIES[0]))).c_str());
-        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,1>, &std::cos,std::string("cos, number of terms: " +
                                                                                                        std::to_string(std::get<0>(COS_POLIES[1]))).c_str());
-        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,2>, &std::cos,std::string("cos, number of terms: " +
+        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,1>, &std::cos,std::string("cos, number of terms: " +
                                                                                                        std::to_string(std::get<0>(COS_POLIES[2]))).c_str());
-        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,3>, &std::cos,std::string("cos, number of terms: " +
+        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,2>, &std::cos,std::string("cos, number of terms: " +
                                                                                                        std::to_string(std::get<0>(COS_POLIES[3]))).c_str());
         accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,4>, &std::cos,std::string("cos, number of terms: " +
                                                                                                        std::to_string(std::get<0>(COS_POLIES[4]))).c_str());
-        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,5>, &std::cos,std::string("cos, number of terms: " +
-                                                                                                       std::to_string(std::get<0>(COS_POLIES[5]))).c_str());
         accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,6>, &std::cos,std::string("cos, number of terms: " +
-                                                                                                       std::to_string(std::get<0>(COS_POLIES[6]))).c_str());
+                                                                                                      std::to_string(std::get<0>(COS_POLIES[5]))).c_str());
         accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,7>, &std::cos,std::string("cos, number of terms: " +
+                                                                                                       std::to_string(std::get<0>(COS_POLIES[6]))).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,true,9>, &std::cos,std::string("cos, number of terms: " +
                                                                                                        std::to_string(std::get<0>(COS_POLIES[7]))).c_str());
     }
 }
