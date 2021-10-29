@@ -9,16 +9,22 @@
  * further for relative error reduction. Degrees of polinomials were chosen
  * accuracy wise, in range from first meaningfull to the number that would cover
  * floating point accuracy.
- * Coeffients values are provided here:
+ * Coeffients values for sine and cosine are taken from here:
  * https://gist.github.com/publik-void/067f7f2fef32dbe5c27d6e215f824c91
+ * // TODO use Sollya to generate my own
+ *
+ * Arc tangent approximation polynomials are generated via Sollya library
+ * fpminimax function which outputs minimax polynomial approx. for a given function
 */
 
-inline constexpr int POLIES_COUNT = 8;
-// indexes for approximation, that should suffice floating point accuracy
-inline constexpr int FP_ERROR_DEGREE_INDEX = 5;
-inline constexpr int DP_ERROR_DEGREE_INDEX = 7;
 using PolyData = const double*;
 using PolyIndex = std::size_t;
+
+//====================== Sine/Cosine polinomials =============================//
+inline constexpr int SIN_POLIES_COUNT = 8;
+// indexes for approximation, that should suffice floating point accuracy
+inline constexpr int SP_ERROR_DEGREE_INDEX = 5;
+inline constexpr int DP_ERROR_DEGREE_INDEX = 7;
 
 
 // odd coeffs for sine
@@ -75,7 +81,7 @@ inline constexpr std::array<double,9> SIN_DEGREE_17 =
  -7.64291780693694318128770390349958602E-13,
  2.72047909631134875287705126898888084E-15};
 
-inline constexpr std::array<std::tuple<PolyIndex,PolyData>,POLIES_COUNT> SIN_POLIES =
+inline constexpr std::array<std::tuple<PolyIndex,PolyData>,SIN_POLIES_COUNT> SIN_POLIES =
 {
     std::make_tuple(SIN_DEGREE_3.size(), SIN_DEGREE_3.data()),
     std::make_tuple(SIN_DEGREE_5.size(), SIN_DEGREE_5.data()),
@@ -149,7 +155,7 @@ inline constexpr std::array<double,10> COS_DEGREE_18 =
  4.77627556974286641810975958891813886E-14,
  -1.50677871898184264862447669562686491E-16};
 
-inline constexpr std::array<std::tuple<PolyIndex,PolyData>,POLIES_COUNT> COS_POLIES =
+inline constexpr std::array<std::tuple<PolyIndex,PolyData>,SIN_POLIES_COUNT> COS_POLIES =
 {
     std::make_tuple(COS_DEGREE_4.size(), COS_DEGREE_4.data()),
     std::make_tuple(COS_DEGREE_6.size(), COS_DEGREE_6.data()),
@@ -166,6 +172,77 @@ inline constexpr std::array<std::size_t,SIN_COS_ACC_MAP_COUNT> SIN_COS_ACC_MAP =
 {1,2,3,3,4,4,5,6,6,7,7};
 
 // accuracy template parameter default values
-template <typename T> constexpr std::size_t accuracy = DP_ERROR_DEGREE_INDEX; // by default the most accurate
-template <> inline constexpr std::size_t accuracy<float> = FP_ERROR_DEGREE_INDEX;
-template <> inline constexpr std::size_t accuracy<double> = DP_ERROR_DEGREE_INDEX;
+template <typename T> constexpr std::size_t sinCosAcc = DP_ERROR_DEGREE_INDEX; // by default the most accurate
+template <> inline constexpr std::size_t sinCosAcc<float> = SP_ERROR_DEGREE_INDEX;
+template <> inline constexpr std::size_t sinCosAcc<double> = DP_ERROR_DEGREE_INDEX;
+
+
+//============================= Tan/ATan polinomials =========================//
+inline constexpr int TAN_POLIES_COUNT = 10;
+inline constexpr int HP_ERROR_TAN = 1;
+inline constexpr int SP_ERROR_TAN = 3;
+inline constexpr int DP_ERROR_TAN = 5;
+
+inline constexpr std::array<double,2> TAN_DEGREE_2 =
+{
+ -3.6112171,
+ -4.6133253
+};
+inline constexpr std::array<double,3> TAN_DEGREE_3 =
+{
+ -3.61678027,
+ 0.134516124,
+ -4.033321984
+};
+inline constexpr std::array<double,4> TAN_DEGREE_4 =
+{
+ 211.849369664121,
+ -12.5288887278440,
+ 269.7350131214121,
+ -71.4145309347748
+};
+inline constexpr std::array<double,8> TAN_DEGREE_8 =
+{
+ 10881241.46289544215469695742,
+ -895306.0870564145957447087575,
+ 14181.99563014366386894487566,
+ -45.63638305432707847378129653,
+ 13854426.92637036839270054048,
+ -3988641.468163077300701338784,
+ 135299.4744550023680867559195,
+ -1014.19757617656429288596025
+};
+
+template <typename T> constexpr std::size_t tanAcc = DP_ERROR_TAN; // by default the most accurate
+template <> constexpr std::size_t tanAcc<float> = SP_ERROR_TAN;
+template <> constexpr std::size_t tanAcc<double> = DP_ERROR_TAN;
+
+inline constexpr std::array<double,4> ATAN_DEGREE_3 =
+{
+    2.455098112113773822784423828125e-2,
+    0.97382764215581119060516357421875,
+    -0.258666165173053741455078125,
+    2.37673334777355194091796875e-2
+};
+inline constexpr double ATAN_LINEAR_DEGREE_3_A = 1.9725882448256015777587890625e-3;
+inline constexpr double ATAN_LINEAR_DEGREE_3_B = 1.422767855226993560791015625;
+
+inline constexpr std::array<double,9> ATAN_DEGREE_8 =
+{
+    -7.31612509080248329951246e-3,
+    1.143813058225298884273968,
+    -0.44571262228579688891017,
+    9.96300443419767534081188e-2,
+    -1.327626395338410425495113e-2,
+    1.067967536814928841693018e-3,
+    -5.070853471655922817262763e-5,
+    1.305791235250985948823654e-6,
+    -1.404127114579267754379543e-8
+};
+
+inline constexpr double ATAN_LINEAR_DEGREE_8_A = 4.99484112940984381623366e-4;
+inline constexpr double ATAN_LINEAR_DEGREE_8_B = 1.518475007238157314937155;
+// argument value for atan approximation tha correspondes to the change of polinomial used
+// for approx. ex: if arg < switch value -> higher degree polynom is used, else linear approx.
+constexpr std::size_t ATAN_APPROX_SWITCH_DEGREE_3 = 5;
+constexpr std::size_t ATAN_APPROX_SWITCH_DEGREE_8 = 20;

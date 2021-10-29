@@ -1,6 +1,7 @@
 #include "trigonometry.hpp"
 #include <iostream>
 
+
 int main()
 {
     std::string answer;
@@ -13,14 +14,14 @@ int main()
             std::string arg;
             std::cout << "Enter argument in degrees:";
             std::cin >> arg;
-            std::cout << "Answer: " << Trigonometrix::sinDeg<double,true>(atof(arg.c_str())) << std::endl;
+            std::cout << "Answer: " << Trigonometrix::sinDeg(atof(arg.c_str())) << std::endl;
         }
         else if (answer == std::to_string(2))
         {
             std::string arg;
             std::cout << "Enter argument in degrees:";
             std::cin >> arg;
-            std::cout << "Answer: " << Trigonometrix::cosDeg<double,true>(atof(arg.c_str())) << std::endl;
+            std::cout << "Answer: " << Trigonometrix::cosDeg(atof(arg.c_str())) << std::endl;
         }
     }
     return 0;

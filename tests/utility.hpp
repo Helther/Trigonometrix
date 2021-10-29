@@ -79,7 +79,11 @@ template<typename T> T absoluteMaxError(const std::vector<T>& measure, const std
     T maximum = 0;
     for(size_t i = 0; i < measure.size(); ++i)
         if (std::abs(measure[i] - control[i]) > maximum)
+        {
             maximum = measure[i] - control[i];
+            if (maximum > 40)
+                    maximum;
+        }
 
     return maximum;
 }
@@ -190,11 +194,11 @@ void accuracyBench(T start, T range, T step, T(*MeasureFunc)(T), T(*ControlFunc)
         control.push_back(ControlFunc(i));
     }
     std::cout << " number of passes " << std::to_string(count) << std::endl;
-    std::cout << "abs err: " << absoluteAverageError(measure, control) << std::endl;
-    std::cout << "rel err: " << relativeAverageError(measure, control) << std::endl;
-    std::cout << "rms err: " << rmsError(measure, control) << std::endl;
-    std::cout << "max abs err: " << absoluteMaxError(measure, control) << std::endl;
-    std::cout << "max rel err: " << relativeMaxError(measure, control) << std::endl;
+    std::cout << "abs error: " << absoluteAverageError(measure, control) << std::endl;
+    std::cout << "rel error: " << relativeAverageError(measure, control) << std::endl;
+    std::cout << "rms error: " << rmsError(measure, control) << std::endl;
+    std::cout << "max abs error: " << absoluteMaxError(measure, control) << std::endl;
+    std::cout << "max rel error: " << relativeMaxError(measure, control) << std::endl;
 }
 
 template<typename T, typename RandDistr = std::uniform_real_distribution<T>>
@@ -215,19 +219,20 @@ void accuracyBenchRand(T min, T max, int size, T(*MeasureFunc)(T), T(*ControlFun
         control[i] = (ControlFunc(arg));
     }
     std::cout << " number of passes " << std::to_string(count) << std::endl;
-    std::cout << "abs err: " << absoluteAverageError(measure, control) << std::endl;
-    std::cout << "rel err: " << relativeAverageError(measure, control) << std::endl;
-    std::cout << "rms err: " << rmsError(measure, control) << std::endl;
-    std::cout << "max abs err: " << absoluteMaxError(measure, control) << std::endl;
-    std::cout << "max rel err: " << relativeMaxError(measure, control) << std::endl;
+    std::cout << "abs error: " << absoluteAverageError(measure, control) << std::endl;
+    std::cout << "rel error: " << relativeAverageError(measure, control) << std::endl;
+    std::cout << "rms error: " << rmsError(measure, control) << std::endl;
+    std::cout << "max abs error: " << absoluteMaxError(measure, control) << std::endl;
+    std::cout << "max rel error: " << relativeMaxError(measure, control) << std::endl;
 }
+// returns relative runtime diffence, compared to control func
 template<typename T, typename TimeScale = std::chrono::milliseconds>
-void speedBench(T start, T range, T step, T(*MeasureFunc)(T), T(*ControlFunc)(T), const char* name)
+float speedBench(T start, T range, T step, T(*MeasureFunc)(T), T(*ControlFunc)(T), const char* name)
 {
     std::cout << std::endl <<"=========== Speed Benchmark " << name << " ============" << std::endl;
     u_int64_t count = 0;
     for(T i = start; i < range; i+=step, ++count);
-    std::cout << "number of passes " << std::to_string(count) << std::endl;
+    std::cout << " number of passes " << std::to_string(count) << std::endl;
 
     auto startTime = std::chrono::high_resolution_clock::now();
     for(T i = start; i < range; i+=step)
@@ -236,16 +241,20 @@ void speedBench(T start, T range, T step, T(*MeasureFunc)(T), T(*ControlFunc)(T)
     auto duration = std::chrono::duration_cast<TimeScale>(endTime - startTime);
     std::cout << "Trigonometrix duration in " << TimeScaleStr<TimeScale> << ": " <<  duration.count() << std::endl;
 
-    startTime = std::chrono::high_resolution_clock::now();
+    auto startTime2 = std::chrono::high_resolution_clock::now();
     for(T i = start; i < range; i+=step)
         ControlFunc(i);
-    endTime = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<TimeScale>(endTime - startTime);
-    std::cout << "Std duration in " << TimeScaleStr<TimeScale> << ": " << duration.count() << std::endl;
+    auto endTime2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<TimeScale>(endTime2 - startTime2);
+    std::cout << "Std duration in " << TimeScaleStr<TimeScale> << ": " << duration2.count() << std::endl;
+    auto diff = float(duration.count()) / float(duration2.count());
+    auto res = (diff > 1.f) ? "slower" : "faster";
+    std::cout << ((diff > 1.f) ? diff :  1.f/diff) << " times " << res << " than std" << std::endl;
+    return diff;
 }
-
+// returns relative runtime diffence, compared to control func
 template<typename T, typename TimeScale = std::chrono::milliseconds, typename RandDistr = std::uniform_real_distribution<T>>
-void speedBenchRand(T min, T max, int size, T(*MeasureFunc)(T), T(*ControlFunc)(T), std::random_device& rnd, const char* name)
+float speedBenchRand(T min, T max, int size, T(*MeasureFunc)(T), T(*ControlFunc)(T), std::random_device& rnd, const char* name)
 {
     assert(min < max && "invalid args");
     std::cout << std::endl <<"=========== Speed Benchmark Random " << name << " ============" << std::endl;
@@ -257,17 +266,21 @@ void speedBenchRand(T min, T max, int size, T(*MeasureFunc)(T), T(*ControlFunc)(
         RandDistr dist(min, max);
         data[i] = dist(rnd);
     }
-    std::cout << "number of passes " << std::to_string(count) << std::endl;
+    std::cout << " number of passes " << std::to_string(count) << std::endl;
     auto startTime = std::chrono::high_resolution_clock::now();
     for(T& i : data)
         MeasureFunc(i);
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<TimeScale>(endTime - startTime);
     std::cout << "Trigonometrix duration in " << TimeScaleStr<TimeScale> << ": " << duration.count() << std::endl;
-    startTime = std::chrono::high_resolution_clock::now();
+    auto startTime2 = std::chrono::high_resolution_clock::now();
     for(T& i : data)
         ControlFunc(i);
-    endTime = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<TimeScale>(endTime - startTime);
-    std::cout << "Std duration in " << TimeScaleStr<TimeScale> << ": " << duration.count() << std::endl;
+    auto endTime2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<TimeScale>(endTime2 - startTime2);
+    std::cout << "Std duration in " << TimeScaleStr<TimeScale> << ": " << duration2.count() << std::endl;
+    auto diff = float(duration.count()) / float(duration2.count());
+    auto res = (diff > 1.f) ? "slower" : "faster";
+    std::cout << ((diff > 1.f) ? diff :  1.f/diff) << " times " << res << " than std" << std::endl;
+    return diff;
 }

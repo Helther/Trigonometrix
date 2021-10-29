@@ -1,5 +1,7 @@
 /*
-// FIle contains
+ * File contains interface and internal workings of such functions as: sine,
+ * cosine, tangent, arc-sin/cos/tan. Function interface allows for accuracy/speed
+ * tradeoff.
 */
 #pragma once
 
@@ -20,7 +22,7 @@ inline constexpr auto QUARTER_PI = 7.853981633974483096E-1;
 inline constexpr auto INV_QUARTER_PI = 1 / QUARTER_PI;
 inline constexpr auto INV_HALF_PI = 1 / HALF_PI;
 inline constexpr auto TWO_PI = 6.2831853071795864769;
-// value that represents the moment when argument becomes too large standart reduction
+// value that represents the moment when argument becomes too large for standart reduction
 inline constexpr auto RANGE_REDUCTION_SWITCH = std::numeric_limits<float>::max();// TODO devise fitting change point
 
 namespace Trigonometrix
@@ -259,7 +261,7 @@ enum Quads
         const T sign = x > 0 ? 1 : -1;
         return (int64_t)(x + sign*h);
 		}
-    //======== LU table implementation with range folding to 0...Pi/4 range ==//
+//======== LU table implementation with range folding to 0...Pi/4 range ======//
     constexpr float sin_inner_table(float x) noexcept
     {
         if (x != QUARTER_PI)
@@ -316,34 +318,49 @@ enum Quads
         return COS_TABLE_D[index] + diff * COS_GRAD_D[gradIndex];
     }
 //============================= Polynomial implementation ====================//
-    template <typename T, unsigned accuracyDegree>
+    template <typename T, std::size_t accuracy>
     constexpr T sin_inner_polinomial(T x) noexcept
     {
         if (x == 0)
-            return 0;
+            return x;
         const T x2 = x * x;
-        constexpr auto polySize = std::get<PolyIndex>(SIN_POLIES[accuracyDegree]);
-        T res = std::get<PolyData>(SIN_POLIES[accuracyDegree])[polySize-1];
-        for (int i = polySize-1; i >= 0; --i)
-            res = res * x2 + std::get<PolyData>(SIN_POLIES[accuracyDegree])[i];
+        constexpr auto polySize = std::get<PolyIndex>(SIN_POLIES[accuracy]);
+        T res = std::get<PolyData>(SIN_POLIES[accuracy])[polySize-1];
+        for (int i = polySize-2; i >= 0; --i)
+            res = res * x2 + std::get<PolyData>(SIN_POLIES[accuracy])[i];
 
-        return res *= x;
+        return res * x;
     }
 
-    template <typename T, unsigned accuracyDegree>
+    template <typename T, std::size_t accuracy>
     constexpr T cos_inner_polinomial(T x) noexcept
     {
         if (x == 0)
             return 1;
         const T x2 = x * x;
-        constexpr auto polySize = std::get<PolyIndex>(COS_POLIES[accuracyDegree]);
-        T res = std::get<PolyData>(COS_POLIES[accuracyDegree])[polySize-1];
-        for (int i = polySize-1; i >= 0; --i)
-            res = res * x2 + std::get<PolyData>(COS_POLIES[accuracyDegree])[i];
+        constexpr auto polySize = std::get<PolyIndex>(COS_POLIES[accuracy]);
+        T res = std::get<PolyData>(COS_POLIES[accuracy])[polySize-1];
+        for (int i = polySize-2; i >= 0; --i)
+            res = res * x2 + std::get<PolyData>(COS_POLIES[accuracy])[i];
 
         return res;
     }
 
+    template <typename T, bool fast>
+    constexpr T tan_inner_polynomial(T x) noexcept
+    {
+        x *= INV_QUARTER_PI;
+        const T x2 = x * x;
+        if constexpr(fast)
+        {
+            return x * TAN_DEGREE_2[0] / (TAN_DEGREE_2[1] + x2);
+        }
+        else
+        {
+            return x * (TAN_DEGREE_4[0] + TAN_DEGREE_4[1] * x2) /
+                    (TAN_DEGREE_4[2] + x2 * (TAN_DEGREE_4[3] + x2));
+        }
+    }
 }
 //============================= END INTERNAL =================================//
 
@@ -358,16 +375,19 @@ template <typename T> constexpr T degToRad(T value) noexcept
 }
 
 //================================== Interface ===============================//
-/* polyApprox - defines implementation
-* TODO better interface is needed
-* accuracyDegree - integer value in range 0..10 that scales up the accuracy
-* of the approximation, where value stands for number of digits of accurary required
-* in fractional part of the result (i.e. to get 0.0xx accuracy choose accuracy=1)
+/*
+ * Approximations of Sine/Cosine, where:
+ * polyApprox - defines implementation, poly for polynomial, else LUT
+ * accuracy - integer value in range 0..10 that scales up the accuracy
+ * of the approximation, where value stands for number of digits of accurary required
+ * in fractional part of the result (i.e. to get 0.0xx accuracy choose accuracy=1,
+ * so it guarantees that maximum absolute error will be lower than 0.1 on the argument range).
+ * Better accuracy, leads to slower runtime (obviously)
 */
-template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
-constexpr T cos(T x) noexcept requires(std::is_floating_point<T>::value)
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr T cos(T x) noexcept requires(std::is_floating_point_v<T>)
 {
-    static_assert (accuracyDegree >= 0 && accuracyDegree < SIN_COS_ACC_MAP_COUNT, "invalid accuracy");
+    static_assert (accuracy < SIN_COS_ACC_MAP_COUNT, "invalid accuracy");
     if (x == std::numeric_limits<T>::infinity()) // don't try to compute inf and signal a nan
         return std::numeric_limits<T>::signaling_NaN();
     const auto range = polyApprox ? HALF_PI : QUARTER_PI;
@@ -376,20 +396,20 @@ constexpr T cos(T x) noexcept requires(std::is_floating_point<T>::value)
     if constexpr (polyApprox)
     {
         if (res.noReduciton)
-            return _Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return _Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         const int sign = res.quad >= 0 ? 1 : -1;
         x *= sign;
         // split function period into 4 equal parts shifted by Pi/2
         switch ((res.quad*sign) & Pi3by2_2Pi)
         {
         case Zero_Pi2:
-            return _Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return _Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         case Pi2_Pi:
-            return -_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return -_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         case Pi_Pi3by2:
-            return -_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return -_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         case Pi3by2_2Pi:
-            return _Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return _Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         }
     }
     else
@@ -424,55 +444,234 @@ constexpr T cos(T x) noexcept requires(std::is_floating_point<T>::value)
     return x;
 }
 
-template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
-constexpr T sin(T x) noexcept requires(std::is_floating_point<T>::value)
+// wrapper function to handle interger arguments
+template<typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr auto cos(T x) noexcept requires (std::is_integral_v<T>)
 {
-    static_assert (accuracyDegree >= 0 && accuracyDegree < SIN_COS_ACC_MAP_COUNT, "invalid accuracy");
+    return cos<double,accuracy,polyApprox>(double(x));
+}
+
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr T sin(T x) noexcept requires(std::is_floating_point_v<T>)
+{
+    static_assert (accuracy < SIN_COS_ACC_MAP_COUNT, "invalid accuracy");
     if (x == std::numeric_limits<T>::infinity())
         return std::numeric_limits<T>::signaling_NaN();
     if constexpr (polyApprox)
     {
         const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, HALF_PI, INV_HALF_PI);
         if (res.noReduciton)
-            return _Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return _Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         const int sign = res.quad >= 0 ? 1 : -1;
         x *= sign;
         switch ((res.quad*sign) & Pi3by2_2Pi)
         {
         case Zero_Pi2:
-            return sign*_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return sign*_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         case Pi2_Pi:
-            return sign*_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return sign*_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         case Pi_Pi3by2:
-            return -sign*_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return -sign*_Internal::sin_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         case Pi3by2_2Pi:
-            return -sign*_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracyDegree]>(x);
+            return -sign*_Internal::cos_inner_polinomial<T,SIN_COS_ACC_MAP[accuracy]>(x);
         }
     }
     else
     {
-        return cos(HALF_PI - x);
+        return cos<T,accuracy,polyApprox>(HALF_PI - x);
     }
     assert(false && "invalid range");
     return x;
 }
 
+// wrapper function to handle interger arguments
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr auto sin(T x) noexcept requires (std::is_integral_v<T>)
+{
+    return sin<double,accuracy,polyApprox>(double(x));
+}
 
-template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
-constexpr T cosDeg(T degrees) noexcept requires(std::is_floating_point<T>::value)
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr T cosDeg(T degrees) noexcept requires(std::is_floating_point_v<T>)
 {
     if (degrees == std::numeric_limits<T>::infinity())
         return std::numeric_limits<T>::signaling_NaN();
-    return cos<T,polyApprox,accuracyDegree>(degToRad(degrees));
+    return cos<T,accuracy,polyApprox>(degToRad(degrees));
 }
 
-template <typename T, bool polyApprox = true, std::size_t accuracyDegree = accuracy<T>>
-constexpr T sinDeg(T degrees) noexcept requires(std::is_floating_point<T>::value)
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr T sinDeg(T degrees) noexcept requires(std::is_floating_point_v<T>)
 {
     if (degrees == std::numeric_limits<T>::infinity())
         return std::numeric_limits<T>::signaling_NaN();
-    return sin<T,polyApprox,accuracyDegree>(degToRad(degrees));
+    return sin<T,accuracy,polyApprox>(degToRad(degrees));
 }
+
+// wrapper function to handle interger arguments
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr auto cosDeg(T degrees) noexcept requires(std::is_integral_v<T>)
+{
+    return cos<double,accuracy,polyApprox>(degToRad(double(degrees)));
+}
+
+// wrapper function to handle interger arguments
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr auto sinDeg(T degrees) noexcept requires(std::is_integral_v<T>)
+{
+    return sin<double,accuracy,polyApprox>(degToRad(double(degrees)));
+}
+
+/*
+ * Polynomial approximation of Tangent(x), where:
+ * there are two modes, fast has max relative error of 0.0033 and slow - 1e-7,
+ * although runtime is about the same, with slight advantage of the former.
+ */
+template <typename T, bool fast = true>
+constexpr T tan(T x) noexcept requires(std::is_floating_point_v<T>)
+{
+    const int sign = x >= 0 ? 1 : -1;
+    const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, QUARTER_PI, INV_QUARTER_PI);
+    x *= sign;
+    if (x == 0 && (res.quad == 2*sign || res.quad == 6*sign))// result approaches infinity for args Pi/2 and 3Pi/2
+        return std::numeric_limits<T>::infinity();
+    switch ((res.quad*sign) & PiPi3by4_2Pi)
+    {
+    case Zero_Pi4:
+         return sign*_Internal::tan_inner_polynomial<T,fast>(x);
+    case Pi4_Pi2:
+        return sign/_Internal::tan_inner_polynomial<T,fast>(QUARTER_PI - x);
+    case Pi2_Pi3by4:
+        return -sign/_Internal::tan_inner_polynomial<T,fast>(x);
+    case Pi3by4_Pi:
+        return -sign*_Internal::tan_inner_polynomial<T,fast>(QUARTER_PI - x);
+    case PiZero_Pi4:
+        return sign*_Internal::tan_inner_polynomial<T,fast>(x);
+    case PiPi4_Pi2:
+        return sign/_Internal::tan_inner_polynomial<T,fast>(QUARTER_PI - x);
+    case PiPi2_Pi3by4:
+        return -sign/_Internal::tan_inner_polynomial<T,fast>(x);
+    case PiPi3by4_2Pi:
+        return -sign*_Internal::tan_inner_polynomial<T,fast>(QUARTER_PI - x);
+    }
+    assert(false && "invalid range");
+    return x;
+}
+
+// wrapper function to handle interger arguments
+template <typename T, bool fast = true>
+constexpr auto tan(T x) noexcept requires(std::is_integral_v<T>)
+{
+    return tan<double,fast>(double(x));
+}
+
+template <typename T, bool fast = true>
+constexpr auto tanDeg(T degrees) noexcept requires(std::is_floating_point_v<T>)
+{
+    return tan<T,fast>(degToRad(degrees));
+}
+
+// wrapper function to handle interger arguments
+template <typename T, bool fast = true>
+constexpr auto tanDeg(T degrees) noexcept requires(std::is_integral_v<T>)
+{
+    return tan<double,fast>(degToRad(double(degrees)));
+}
+
+
+/*
+ * Polynomial approximation for ArcTangent(x), returns atan in range [-pi/2,pi/2].
+ * It has two modes - fast but lower max accuracy, and vice versa, although this affects
+ * only calculations with args lower than switch value, where approximation switches to linear.
+ * Fast version has max. absolute error - 0.014, slow version - 0.009, basically
+ * former has 1 digit precision in fractional part and latter has 2 digits, but
+ * also almost two times faster than slow version in the region before approx. switch.
+ */
+template <typename T, bool fast = true>
+constexpr T atan(T x) noexcept requires(std::is_floating_point_v<T>)
+{
+    if (x == 0)
+        return x;
+    const int sign = x >= 0 ? 1 : -1;
+    x *= sign;
+    if constexpr(fast)// use lower degree polynomial
+    {
+        if (x > ATAN_APPROX_SWITCH_DEGREE_3)
+            return sign * std::min(HALF_PI, ATAN_LINEAR_DEGREE_3_A * x + ATAN_LINEAR_DEGREE_3_B);
+        else
+        {
+            constexpr auto polySize = ATAN_DEGREE_3.size();
+            T res = ATAN_DEGREE_3[polySize-1];
+            for (int i = polySize-2; i >= 0; --i)
+                res = res * x + ATAN_DEGREE_3[i];
+
+            return sign * res;
+        }
+    }
+    else
+    {
+        if (x > ATAN_APPROX_SWITCH_DEGREE_8)
+            return sign * std::min(HALF_PI, ATAN_LINEAR_DEGREE_8_A * x + ATAN_LINEAR_DEGREE_8_B);
+        else
+        {
+            constexpr auto polySize = ATAN_DEGREE_8.size();
+            T res = ATAN_DEGREE_8[polySize-1];
+            for (int i = polySize-2; i >= 0; --i)
+                res = res * x + ATAN_DEGREE_8[i];
+
+            return sign * res;
+        }
+    }
+}
+
+// wrapper function to handle interger arguments
+template <typename T, bool fast = true>
+constexpr auto atan(T x) noexcept requires(std::is_integral_v<T>)
+{
+    return atan<double,fast>(x);
+}
+
+/*
+ * Approximation of acos(x) with a rational function f such that the
+ * worst absolute error is minimal. That is, pick the function that performs best
+ * in the worst case, and with following restrictions: acos(0) = Pi/2, acos(1) = 0, acos(-1) =
+ * Source: https://github.com/ruuda/convector/blob/master/tools/approx_acos.py
+ * Accuracy: av abs error 3e-11, max abs error 0.0167, accuracy get worse when aproaching the limits.
+ * Up to 2 times faster than std, depending on compiler.
+ * Returns the arccosine of a in the range [0,pi], expecting a to be in the range [-1,+1].
+*/
+template<typename T> constexpr T acos(T x) noexcept requires(std::is_floating_point_v<T>)
+{
+    assert(x >= -1 && x <= 1 && "invalid argument range");
+    constexpr T c1 = -0.939115566365855;
+    constexpr T c2 =  0.9217841528914573;
+    constexpr T c3 = -1.2845906244690837;
+    constexpr T c4 =  0.295624144969963174;
+    const T x2 = x * x;
+    const T x3 = x * x * x;
+    const T x4 = x * x * x * x;
+
+    return HALF_PI + (c1*x + c2*x3) / (1 + c3*x2 + c4*x4);
 
 }
 
+// wrapper function to handle interger arguments
+template<typename T> constexpr auto acos(T x) noexcept requires(std::is_integral_v<T>)
+{
+    return acos<double>(x);
+}
+
+// just a shifted version of acos implementation
+// Returns the arc cosine of a in the range [-pi/2,pi/2], expecting a to be in the range [-1,+1].
+template<typename T> constexpr T asin(T x) noexcept
+{
+    return HALF_PI - acos<T>(x);
+}
+
+// wrapper function to handle interger arguments
+template<typename T> constexpr auto asin(T x) noexcept requires(std::is_integral_v<T>)
+{
+    return HALF_PI - acos<double>(x);
+}
+
+
+}
