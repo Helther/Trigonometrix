@@ -11,8 +11,52 @@
 #include <cmath>
 #include <cassert>
 #include <iomanip>
-#include "trigonometry.hpp"
 #include <vector>
+
+
+
+//================== constexpr array initialization ==========================//
+
+// fold to 1/8 of the period range(pi/4)
+constexpr int SIN_COS_FOLDING_RATIO = 8;
+
+/*
+ * Monotonic lookup table generator.
+ * size value is limited by compiler constexpr operations limit and can be modified
+ * by setting appropriate compile flags
+ */
+template <typename T, typename Info, typename Generator>
+constexpr auto generateLUT(Generator&& f) noexcept
+{
+    using ValueType = decltype (f(T{0}, T{0}));
+    std::array<ValueType,Info::size> data;
+    T currentArg = Info::startValue;
+    // set first value w/o gradient
+    data[0] = f(Info::startValue, 0);
+    currentArg += Info::step;
+
+    for (std::size_t i = 1; i < Info::size; ++i)
+    {
+        data[i] = f(currentArg, std::get<0>(data[i-1]));
+        currentArg += Info::step;
+    }
+
+    return data;
+}
+
+// array initializer
+template <typename T, T (*Func)(T), typename Info>
+inline constexpr auto getLUT = generateLUT<T,Info>([](T arg, T prevValue)
+{
+    // calculate value for arg, and gradient from previous value
+    T value = Func(arg);
+
+    return std::make_pair(value, value - prevValue);
+});
+
+
+
+//========================= file generation ==================================//
 
 inline constexpr auto FLOAT_FNAME = "float_table.hpp";
 inline constexpr auto DOUBLE_FNAME = "double_table.hpp";
@@ -28,9 +72,14 @@ inline constexpr auto DT_COS_GRAD_NAME = "COS_GRAD_D";
 inline constexpr int FLOAT_PREC_DIGITS = 12;
 inline constexpr int DOUBLE_PREC_DIGITS = 19;
 
+int tableSizeFromAcc(double relError, int ratio)
+{
+    return int(M_PI / std::acos(1 - relError) / ratio) + 1;
+}
+
 using namespace std;
 
-// class for redicrecting std output to file
+// class for redirecting std output to file
 class FileRedirectStream
 {
 public:
@@ -72,13 +121,10 @@ private:
     ios_base::fmtflags flags;
 };
 
-static int tableSizeFromAcc(double relError)
-{
-    return int(M_PI / acos(1 - relError) / 8) + 1;
-}
 
 template<typename T, bool isSin>
 static void writeTable(FileRedirectStream& file, int size, const char* countStr)
+    requires(std::is_floating_point_v<T>)
 {
     const char* decl = "inline constexpr ";
     file << decl;
@@ -101,7 +147,7 @@ static void writeTable(FileRedirectStream& file, int size, const char* countStr)
     file << "[" << countStr << ']' << " = {\n";
     T startArg = 0.;
     T currentArg = startArg;
-    T step = QUARTER_PI / size;
+    T step = M_PI_4 / size;
     vector<T> table;
     table.resize(size);
     for(T i = 0; i < size; ++i)
@@ -151,9 +197,9 @@ static void generateSinCosTable()
     static_assert(is_floating_point<T>() && (is_same<T, float>() || is_same<T, double>()));
     int size;
     if constexpr (is_same<T, float>())
-        size = tableSizeFromAcc(1E-9);
+        size = tableSizeFromAcc(1E-9, SIN_COS_FOLDING_RATIO);
     else
-        size = tableSizeFromAcc(1E-11);// should be 1E-17 actually, but the table would be too enormous
+        size = tableSizeFromAcc(1E-11, SIN_COS_FOLDING_RATIO);// should be 1E-17 actually, but the table would be too enormous
     assert(size > 0 && "invalid table size");
     const char* fileName;
     int precision;

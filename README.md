@@ -3,7 +3,7 @@ Constexpr C++ implementation of trigonometric functions approximations
 ## Features
  * constexpr time evaluated  functions
  * compile-time options for implementation(for speed vs accuracy tradeoffs)
- * lookup table generator
+ * constexpr lookup table generator
  * testing and benchmarking utilities
  * test cases for accuracy and speed benchmarks
 ## Description
@@ -22,7 +22,7 @@ so they provide an option for fast/slow versions.
 1. A C++ compiler that supports C++20 standart.
 The following compilers should work:
 
-  * [gcc 9+](https://gcc.gnu.org/)
+  * [gcc 10+](https://gcc.gnu.org/)
 
   * [clang 10+](https://clang.llvm.org/)
 
@@ -50,8 +50,8 @@ are saved in [test_results.txt](test_results.txt)
 
 In conclusion tests showed lower than expected accuracy for both implementations (likely due to rounding 
 while reducing argument range, but it was expected for large args). Also perfomance is on par(in case of polynom) 
-or slighly worse than STL, but it is also expected for such large tables, so further optimizations will come.
-Other functions showed overall better perfomance compared to stl at a higher cost of accuracy.  
+or slighly worse than STL in case of table implementation, so further optimizations are needed.
+Other functions showed overall better perfomance compared to stl at a higher cost of lower accuracy.  
 Test results snippet:
 ```
 sine
@@ -89,6 +89,8 @@ arc tangent
 arc sine
 =========== Speed Benchmark asin ============
 1.50 times faster than std
+
+arc cosine
 =========== Speed Benchmark acos ============
 2.20 times faster than std
 ```
@@ -107,7 +109,6 @@ To run built tests
 
 ## TODO: 
 * Add comparison tests with other libraries
-* add constexpr generation and usage of lookup tables of variable sizes
 * Add tests for FMA contracted versions of approximations
 * Add implementations using vector SSE intrinsics and corresponding tests 
 

@@ -6,6 +6,7 @@
 #include <chrono>
 #include <random>
 #include <functional>
+#include <cassert>
 
 
 //============================== Accuracy suite ============================//
@@ -78,12 +79,11 @@ template<typename T> T absoluteMaxError(const std::vector<T>& measure, const std
     assert(measure.size() == control.size() && "arrays sizes differ!");
     T maximum = 0;
     for(size_t i = 0; i < measure.size(); ++i)
-        if (std::abs(measure[i] - control[i]) > maximum)
-        {
-            maximum = measure[i] - control[i];
-            if (maximum > 40)
-                    maximum;
-        }
+    {
+        const T current = std::abs(measure[i] - control[i]);
+        if (current > maximum)
+            maximum = current;
+    }
 
     return maximum;
 }
@@ -98,13 +98,13 @@ template<typename T> T absoluteAverageError(const std::vector<T>& measure, const
     {// use float optimized sum then
         std::vector<T> sum;
         for(size_t i = 0; i < count; ++i)
-            sum.push_back(measure[i] - control[i]);
+            sum.push_back(std::abs(measure[i] - control[i]));
         divided = preciseSum(sum);
     }
     else
     {// fallback
         for(size_t i = 0; i < count; ++i)
-            divided += (measure[i] - control[i]);
+            divided += (std::abs(measure[i] - control[i]));
     }
 
     return divided / count;

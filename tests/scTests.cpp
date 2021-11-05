@@ -1,19 +1,27 @@
-#include "../src/trigonometry.hpp"
 #include "utility.hpp"
+#include "../src/trigonometry.hpp"
+
+
 
 //============================= constexpr tests ==============================//
 
+template <typename T, T (*Func)(T)>
+constexpr void constexprLUTTest()
+{
+    constexpr auto lut1 = Trigonometrix::_Internal::generic_inner_table<T, Trigonometrix::_Internal::LUTInfo<T, Func, SIN_COS_FOLDING_RATIO,0>>(0);
+}
+
 template <typename T>
 constexpr void constexprTest()
-{// TODO add tan,atan,asin,acos
-    constexpr auto test1 = Trigonometrix::sin<T,false>(T(0));
-    constexpr auto test2 = Trigonometrix::sin<T,true>(T(0));
-    constexpr auto test3 = Trigonometrix::cos<T,false>(T(0));
-    constexpr auto test4 = Trigonometrix::cos<T,true>(T(0));
-    constexpr auto test5 = Trigonometrix::sinDeg<T,false>(T(0));
-    constexpr auto test6 = Trigonometrix::sinDeg<T,true>(T(0));
-    constexpr auto test7 = Trigonometrix::cosDeg<T,false>(T(0));
-    constexpr auto test8 = Trigonometrix::cosDeg<T,true>(T(0));
+{
+    constexpr auto test1 = Trigonometrix::sin<T,0,false>(T(0));
+    constexpr auto test2 = Trigonometrix::sin<T,0,true>(T(0));
+    constexpr auto test3 = Trigonometrix::cos<T,0,false>(T(0));
+    constexpr auto test4 = Trigonometrix::cos<T,0,true>(T(0));
+    constexpr auto test5 = Trigonometrix::sinDeg<T,0,false>(T(0));
+    constexpr auto test6 = Trigonometrix::sinDeg<T,0,true>(T(0));
+    constexpr auto test7 = Trigonometrix::cosDeg<T,0,false>(T(0));
+    constexpr auto test8 = Trigonometrix::cosDeg<T,0,true>(T(0));
     constexpr auto test9 = Trigonometrix::tan<T,true>(T(0));
     constexpr auto test10 = Trigonometrix::tanDeg<T,true>(T(0));
     constexpr auto test11 = Trigonometrix::atan<T,true>(T(0));
@@ -21,7 +29,7 @@ constexpr void constexprTest()
     constexpr auto test13 = Trigonometrix::acos<T>(T(0));
     constexpr auto test14 = Trigonometrix::asin<T>(T(0));
     constexpr auto test15 = Trigonometrix::tan<T,false>(T(0));
-    constexpr auto test116 = Trigonometrix::tanDeg<T,false>(T(0));
+    constexpr auto test16 = Trigonometrix::tanDeg<T,false>(T(0));
 }
 
 
@@ -43,8 +51,8 @@ void accuracyValuesSin()
     std::cout << std::endl <<"============== 0, Pi/4, Pi/2,...2*Pi Accuracy range test " << type << " ==============" << std::endl;
     T start = 0;
     T step = M_PI_4;
-    accuracyBench(start,T(periodRange),step,&Trigonometrix::sin<T, false>, &std::sin,"table implementation");
-    accuracyBench(start,T(periodRange),step,&Trigonometrix::sin<T, true>, &std::sin,"polynomial implementation");
+    accuracyBench(start,T(periodRange),step,&Trigonometrix::sin<T, sinCosAcc<T>, false>, &std::sin,"table implementation");
+    accuracyBench(start,T(periodRange),step,&Trigonometrix::sin<T>, &std::sin,"polynomial implementation");
 }
 
 template <typename T>
@@ -58,29 +66,29 @@ void accuracyValuesCos()
     std::cout << std::endl <<"============== 0, Pi/4, Pi/2,...2*Pi Accuracy range test " << type << " ==============" << std::endl;
     T start = 0;
     T step = M_PI_4;
-    accuracyBench(start,T(periodRange),step,&Trigonometrix::cos<T, false>, &std::cos,"table implementation");
-    accuracyBench(start,T(periodRange),step,&Trigonometrix::cos<T, true>, &std::cos,"polynomial implementation");
+    accuracyBench(start,T(periodRange),step,&Trigonometrix::cos<T, sinCosAcc<T>, false>, &std::cos,"table implementation");
+    accuracyBench(start,T(periodRange),step,&Trigonometrix::cos<T>, &std::cos,"polynomial implementation");
 }
 
 void accuracyRangeTestsSin(std::random_device& r)
 {
-    accuracyBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sin<float, false>, &std::sin,"float table implementation");
-    accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, false>, &std::sin,"double table implementation");
-    accuracyBench(float(-rangeVal),float(rangeVal),float(stepVal),&Trigonometrix::sin<float, true>, &std::sin,"float test polynomial implementation");
-    accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, true>, &std::sin,"double test polynomial implementation");
+    accuracyBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sin<float, sinCosAcc<float>, false>, &std::sin,"float table implementation");
+    accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, sinCosAcc<double>, false>, &std::sin,"double table implementation");
+    accuracyBench(float(-rangeVal),float(rangeVal),float(stepVal),&Trigonometrix::sin<float>, &std::sin,"float test polynomial implementation");
+    accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double>, &std::sin,"double test polynomial implementation");
 
-    accuracyBenchRand(float(-rangeVal),float(rangeVal),runCount, &Trigonometrix::sin<float, false>, &std::sin,r,"float RAND table implementation");
-    accuracyBenchRand(-rangeVal,rangeVal,runCount,&Trigonometrix::sin<double, false>, &std::sin,r,"double RAND table implementation");
-    accuracyBenchRand(float(-rangeVal),float(rangeVal),runCount,&Trigonometrix::sin<float, true>, &std::sin,r,"float test RAND polynomial implementation");
-    accuracyBenchRand(-rangeVal,rangeVal,runCount,&Trigonometrix::sin<double, true>, &std::sin,r,"double test RAND polynomial implementation");
+    accuracyBenchRand(float(-rangeVal),float(rangeVal),runCount, &Trigonometrix::sin<float, sinCosAcc<float>, false>, &std::sin,r,"float RAND table implementation");
+    accuracyBenchRand(-rangeVal,rangeVal,runCount,&Trigonometrix::sin<double, sinCosAcc<double>, false>, &std::sin,r,"double RAND table implementation");
+    accuracyBenchRand(float(-rangeVal),float(rangeVal),runCount,&Trigonometrix::sin<float>, &std::sin,r,"float test RAND polynomial implementation");
+    accuracyBenchRand(-rangeVal,rangeVal,runCount,&Trigonometrix::sin<double>, &std::sin,r,"double test RAND polynomial implementation");
 }
 
 void speedTestsSin(std::random_device& r)
 {
-    speedBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sin<float, false>, &std::sin,"float test table implementation");
-    speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, false>, &std::sin,"double test table implementation");
-    speedBench(float(-rangeVal),float(rangeVal),float(stepVal),&Trigonometrix::sin<float, true>, &std::sin,"float test polynomial implementation");
-    speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, true>, &std::sin,"double test polynomial implementation");
+    speedBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sin<float, sinCosAcc<float>, false>, &std::sin,"float test table implementation");
+    speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, sinCosAcc<double>, false>, &std::sin,"double test table implementation");
+    speedBench(float(-rangeVal),float(rangeVal),float(stepVal),&Trigonometrix::sin<float>, &std::sin,"float test polynomial implementation");
+    speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double>, &std::sin,"double test polynomial implementation");
 
     /* unreliable
     speedBenchRand(float(-rangeVal),float(rangeVal),runCount, &Trigonometrix::sin<float, false>, &std::sin,r,"float table implementation");
@@ -92,23 +100,23 @@ void speedTestsSin(std::random_device& r)
 
 void accuracyRangeTestsCos(std::random_device& r)
 {
-    accuracyBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sin<float, false>, &std::sin,"float table implementation");
-    accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, false>, &std::sin,"double table implementation");
-    accuracyBench(float(-rangeVal),float(rangeVal),float(stepVal),&Trigonometrix::sin<float, true>, &std::sin,"float test polynomial implementation");
-    accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, true>, &std::sin,"double test polynomial implementation");
+    accuracyBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sin<float, sinCosAcc<float>, false>, &std::sin,"float table implementation");
+    accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, sinCosAcc<double>, false>, &std::sin,"double table implementation");
+    accuracyBench(float(-rangeVal),float(rangeVal),float(stepVal),&Trigonometrix::sin<float>, &std::sin,"float test polynomial implementation");
+    accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double>, &std::sin,"double test polynomial implementation");
 
-    accuracyBenchRand(float(-rangeVal),float(rangeVal),runCount, &Trigonometrix::sin<float, false>, &std::sin,r,"float RAND table implementation");
-    accuracyBenchRand(-rangeVal,rangeVal,runCount,&Trigonometrix::sin<double, false>, &std::sin,r,"double RAND table implementation");
-    accuracyBenchRand(float(-rangeVal),float(rangeVal),runCount,&Trigonometrix::sin<float, true>, &std::sin,r,"float test RAND polynomial implementation");
-    accuracyBenchRand(-rangeVal,rangeVal,runCount,&Trigonometrix::sin<double, true>, &std::sin,r,"double test RAND polynomial implementation");
+    accuracyBenchRand(float(-rangeVal),float(rangeVal),runCount, &Trigonometrix::sin<float, sinCosAcc<float>, false>, &std::sin,r,"float RAND table implementation");
+    accuracyBenchRand(-rangeVal,rangeVal,runCount,&Trigonometrix::sin<double, sinCosAcc<double>, false>, &std::sin,r,"double RAND table implementation");
+    accuracyBenchRand(float(-rangeVal),float(rangeVal),runCount,&Trigonometrix::sin<float>, &std::sin,r,"float test RAND polynomial implementation");
+    accuracyBenchRand(-rangeVal,rangeVal,runCount,&Trigonometrix::sin<double>, &std::sin,r,"double test RAND polynomial implementation");
 }
 
 void speedTestsCos(std::random_device& r)
 {
-    speedBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sin<float, false>, &std::sin,"float test table implementation");
-    speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, false>, &std::sin,"double test table implementation");
-    speedBench(float(-rangeVal),float(rangeVal),float(stepVal),&Trigonometrix::sin<float, true>, &std::sin,"float test polynomial implementation");
-    speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, true>, &std::sin,"double test polynomial implementation");
+    speedBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sin<float, sinCosAcc<float>, false>, &std::sin,"float test table implementation");
+    speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double, sinCosAcc<double>, false>, &std::sin,"double test table implementation");
+    speedBench(float(-rangeVal),float(rangeVal),float(stepVal),&Trigonometrix::sin<float>, &std::sin,"float test polynomial implementation");
+    speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double>, &std::sin,"double test polynomial implementation");
     /* unreliable
     speedBenchRand(float(-rangeVal),float(rangeVal),runCount, &Trigonometrix::sin<float, false>, &std::sin,r,"float table implementation");
     speedBenchRand(-rangeVal,rangeVal,runCount, &Trigonometrix::sin<double, false>, &std::sin,r,"double table implementation");
@@ -159,6 +167,34 @@ void SinCosPolyAccuracyTests(bool sin)
     }
 }
 
+std::string tableSizeStr(std::size_t accuracy)
+{
+    std::size_t size = Trigonometrix::_Internal::constLUTSizeFromAcc(Trigonometrix::_Internal::SC_LUT_ACC_MAP[accuracy],SIN_COS_FOLDING_RATIO);
+    return std::to_string(size);
+}
+void sinCosTableAccuracyTests(bool isSin)
+{
+    std::cout << std::endl <<"============== Table Implemetnation Accuracy test by it's size" << " ==============" << std::endl;
+    double start = 0;
+    double step = stepVal;
+    if (isSin)
+    {
+        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double, 0, false>, &std::sin,std::string("double table implementation; digits of accuracy: 0; size: " + tableSizeStr(0)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double, 1, false>, &std::sin,std::string("double table implementation; digits of accuracy: 1; size: " + tableSizeStr(1)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double, 2, false>, &std::sin,std::string("double table implementation; digits of accuracy: 2; size: " + tableSizeStr(2)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double, 3, false>, &std::sin,std::string("double table implementation; digits of accuracy: 3; size: " + tableSizeStr(3)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::sin<double, 4, false>, &std::sin,std::string("double table implementation; digits of accuracy: 4; size: " + tableSizeStr(4)).c_str());
+    }
+    else
+    {
+        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double, 0, false>, &std::cos,std::string("double table implementation; digits of accuracy: 0; size: " + tableSizeStr(0)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double, 1, false>, &std::cos,std::string("double table implementation; digits of accuracy: 1; size: " + tableSizeStr(1)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double, 2, false>, &std::cos,std::string("double table implementation; digits of accuracy: 2; size: " + tableSizeStr(2)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double, 3, false>, &std::cos,std::string("double table implementation; digits of accuracy: 3; size: " + tableSizeStr(3)).c_str());
+        accuracyBench(start,periodRange,step,&Trigonometrix::cos<double, 4, false>, &std::cos,std::string("double table implementation; digits of accuracy: 4; size: " + tableSizeStr(4)).c_str());
+    }
+}
+
 void tanTests(std::random_device& r)
 {
     accuracyBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::tan<double,true>, &std::tan,"tan, fast version");
@@ -200,9 +236,13 @@ void acosTests(std::random_device& r)
 
 
 int main()
-{
+{    
     const char* sep = "========================================================================";
     const char* sepBrackets = "========================";
+    constexprLUTTest<float,&Trigonometrix::sin>();
+    constexprLUTTest<double,&Trigonometrix::sin>();
+    constexprLUTTest<float,&Trigonometrix::cos>();
+    constexprLUTTest<double,&Trigonometrix::cos>();
     std::random_device r;
     constexprTest<float>();
     constexprTest<double>();
@@ -213,6 +253,7 @@ int main()
     accuracyValuesSin<double>();
     speedTestsSin(r);
     SinCosPolyAccuracyTests(true);
+    sinCosTableAccuracyTests(true);
     std::cout << std::endl << sep << std::endl << sepBrackets << " END Sine Benchmark " << sepBrackets << std::endl;
 
     std::cout << std::endl << sep << std::endl << sepBrackets << " Cosine Benchmark " << sepBrackets << std::endl;
@@ -221,6 +262,7 @@ int main()
     accuracyValuesCos<double>();
     speedTestsCos(r);
     SinCosPolyAccuracyTests(false);
+    sinCosTableAccuracyTests(false);
     std::cout << std::endl << sep << std::endl << sepBrackets << " END Cosine Benchmark " << sepBrackets << std::endl;
 
     std::cout << std::endl << sep << std::endl << sepBrackets << " Tangent Benchmark " << sepBrackets << std::endl;
@@ -238,5 +280,6 @@ int main()
     std::cout << std::endl << sep << std::endl << sepBrackets << " Arc Cosine Benchmark " << sepBrackets << std::endl;
     acosTests(r);
     std::cout << std::endl << sep << std::endl << sepBrackets << " END Arc Cosine Benchmark " << sepBrackets << std::endl;
+
     return 0;
 }

@@ -6,16 +6,10 @@ project(${project_name} LANGUAGES CXX)
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_20)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-fconcepts)
-endif()
-
 add_executable(${project_name}
     src/main.cpp
     src/trigonometry.hpp
     src/lut_generator.hpp
-    src/float_table.hpp
-    src/double_table.hpp
     src/polynomials_coeffs.hpp
     )
 

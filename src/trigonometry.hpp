@@ -9,9 +9,8 @@
 #include <cmath>
 #include <type_traits>
 #include <cassert>
-#include "float_table.hpp"
-#include "double_table.hpp"
 #include "polynomials_coeffs.hpp"
+#include "lut_generator.hpp"
 #include <limits>
 #include <inttypes.h>
 
@@ -47,6 +46,50 @@ enum Quads
     Pi_Pi3by2  = 2,
     Pi3by2_2Pi = 3
 };
+
+/*
+ * Approximation of acos(x) with a rational function f such that the
+ * worst absolute error is minimal. That is, pick the function that performs best
+ * in the worst case, and with following restrictions: acos(0) = Pi/2, acos(1) = 0, acos(-1) =
+ * Source: https://github.com/ruuda/convector/blob/master/tools/approx_acos.py
+ * Accuracy: av abs error 3e-11, max abs error 0.0167, accuracy get worse when aproaching the limits.
+ * Up to 2 times faster than std, depending on compiler.
+ * Returns the arccosine of a in the range [0,pi], expecting a to be in the range [-1,+1].
+*/
+template<typename T> constexpr T acos(T x) noexcept requires(std::is_floating_point_v<T>)
+{
+    assert(x >= -1 && x <= 1 && "invalid argument range");
+    constexpr T c1 = -0.939115566365855;
+    constexpr T c2 =  0.9217841528914573;
+    constexpr T c3 = -1.2845906244690837;
+    constexpr T c4 =  0.295624144969963174;
+    const T x2 = x * x;
+    const T x3 = x * x * x;
+    const T x4 = x * x * x * x;
+
+    return HALF_PI + (c1*x + c2*x3) / (1 + c3*x2 + c4*x4);
+
+}
+
+// wrapper function to handle interger arguments
+template<typename T> constexpr auto acos(T x) noexcept requires(std::is_integral_v<T>)
+{
+    return acos<double>(x);
+}
+
+// just a shifted version of acos implementation
+// Returns the arc cosine of a in the range [-pi/2,pi/2], expecting a to be in the range [-1,+1].
+template<typename T> constexpr T asin(T x) noexcept requires(std::is_floating_point_v<T>)
+{
+    return HALF_PI - acos<T>(x);
+}
+
+// wrapper function to handle interger arguments
+template<typename T> constexpr auto asin(T x) noexcept requires(std::is_integral_v<T>)
+{
+    return HALF_PI - acos<double>(x);
+}
+
 
 //=================================== INTERNAL ===============================//
     namespace _Internal
@@ -260,63 +303,47 @@ enum Quads
         constexpr auto h = T(0.5) - std::numeric_limits<T>::epsilon();
         const T sign = x > 0 ? 1 : -1;
         return (int64_t)(x + sign*h);
-		}
-//======== LU table implementation with range folding to 0...Pi/4 range ======//
-    constexpr float sin_inner_table(float x) noexcept
-    {
-        if (x != QUARTER_PI)
-            x = x / QUARTER_PI * TABLE_COUNT_F;
-        else
-            x = TABLE_COUNT_F - 1;
-        const auto index = getNearestInt(x);
-        const float diff = x - index;
-        // if int is higher that arg get gradient from previous range
-        const int gradIndex = (diff < 0 && index > 0) ? index-1 : index;
-        //return fmaf(diff, SIN_GRAD_F[gradIndex], SIN_TABLE_F[index]);// TODO test fma version
-        return SIN_TABLE_F[index] + diff * SIN_GRAD_F[gradIndex];
     }
 
-    constexpr double sin_inner_table(double x) noexcept
+//======================= Generic LU table implementation ====================//
+
+    // loose approximation of what size of the table whould be for a given relative error
+    constexpr int constLUTSizeFromAcc(double relError, int ratio)
     {
-        if (x != QUARTER_PI)
-            x = x / QUARTER_PI * TABLE_COUNT_D;
-        else
-            x = TABLE_COUNT_D - 1;
-        const auto index = getNearestInt(x);
-        const float diff = x - index;
+        return int(M_PI / Trigonometrix::acos(1 - relError) / ratio) + 1;
+    }
+    // maps number of accurate significant needed to the max error value for constLUTSizeFromAcc
+    inline constexpr std::array<double,SIN_COS_ACC_MAP_COUNT> SC_LUT_ACC_MAP =
+    { 0.1,0.01,0.001,0.0001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001 };
+
+    // Information for periodic function LUT generation
+    template <typename T, T(*Func)(T), std::size_t foldingRatio, std::size_t acc>
+    struct LUTInfo
+    {
+        static constexpr std::size_t size = constLUTSizeFromAcc(SC_LUT_ACC_MAP[acc],foldingRatio);
+        static constexpr double startValue = 0;
+        static constexpr double endValue = 2*M_PI / foldingRatio;
+        static constexpr double step = endValue / size;
+        static constexpr auto table = getLUT<T,Func,LUTInfo>;
+    };
+    /*
+     * calculates value with gradient approximation betweeen value points, based
+     * on a given TableInfo static struct descibed above
+     */
+    template <typename T, class TableInfo>
+    constexpr T generic_inner_table(T x) noexcept
+    {
+        x = x / TableInfo::endValue * TableInfo::size;
+        auto index = getNearestInt(x);
+        if (index == TableInfo::size)
+            --index;
+        const T diff = x - index;
 
         const int gradIndex = (diff < 0 && index > 0) ? index-1 : index;
-
-        return SIN_TABLE_D[index] + diff * SIN_GRAD_D[gradIndex];
+        // TODO test FMA version
+        return std::get<0>(TableInfo::table[index]) + diff * std::get<1>(TableInfo::table[gradIndex]);
     }
 
-    constexpr float cos_inner_table(float x) noexcept
-    {
-        if (x != QUARTER_PI)
-            x = x / QUARTER_PI * TABLE_COUNT_F;
-        else
-            x = TABLE_COUNT_F - 1;
-        const auto index = getNearestInt(x);
-        const float diff = x - index;
-
-        const int gradIndex = (diff < 0 && index > 0) ? index-1 : index;
-
-        return COS_TABLE_F[index] + diff * COS_GRAD_F[gradIndex];
-    }
-
-    constexpr double cos_inner_table(double x) noexcept
-    {
-        if (x != QUARTER_PI)
-            x = x / QUARTER_PI * TABLE_COUNT_D;
-        else
-            x = TABLE_COUNT_D - 1;
-        const auto index = getNearestInt(x);
-        const float diff = x - index;
-
-        const int gradIndex = (diff < 0 && index > 0) ? index-1 : index;
-
-        return COS_TABLE_D[index] + diff * COS_GRAD_D[gradIndex];
-    }
 //============================= Polynomial implementation ====================//
     template <typename T, std::size_t accuracy>
     constexpr T sin_inner_polinomial(T x) noexcept
@@ -373,7 +400,11 @@ template <typename T> constexpr T degToRad(T value) noexcept
 {
     return value * DEG_TO_RAD;
 }
-
+// forward declaractions for LUT generation
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr T sin(T x) noexcept requires(std::is_floating_point_v<T>);
+template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+constexpr auto sin(T x) noexcept requires (std::is_integral_v<T>);
 //================================== Interface ===============================//
 /*
  * Approximations of Sine/Cosine, where:
@@ -417,27 +448,27 @@ constexpr T cos(T x) noexcept requires(std::is_floating_point_v<T>)
         const int sign = x >= 0 ? 1 : -1; // get sign and negate it, so table won't out of range
         x *= sign;
         if (res.noReduciton)
-            return _Internal::cos_inner_table(x);
+            return _Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::cos,SIN_COS_FOLDING_RATIO, accuracy>>(x);
         const int quad = res.quad >= 0 ? res.quad : -res.quad;
         // split function period into 8 equal parts shifted by Pi/4
         switch (quad & PiPi3by4_2Pi)
         {
         case Zero_Pi4:
-             return _Internal::cos_inner_table(x);
+            return _Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::cos,SIN_COS_FOLDING_RATIO, accuracy>>(x);
         case Pi4_Pi2:
-            return _Internal::sin_inner_table(QUARTER_PI - x);
+            return _Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::sin,SIN_COS_FOLDING_RATIO, accuracy>>(QUARTER_PI - x);
         case Pi2_Pi3by4:
-            return -_Internal::sin_inner_table(x);
+            return -_Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::sin,SIN_COS_FOLDING_RATIO, accuracy>>(x);
         case Pi3by4_Pi:
-            return -_Internal::cos_inner_table(QUARTER_PI - x);
+            return -_Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::cos,SIN_COS_FOLDING_RATIO, accuracy>>(QUARTER_PI - x);
         case PiZero_Pi4:
-            return -_Internal::cos_inner_table(x);
+            return -_Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::cos,SIN_COS_FOLDING_RATIO, accuracy>>(x);
         case PiPi4_Pi2:
-            return -_Internal::sin_inner_table(QUARTER_PI - x);
+            return -_Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::sin,SIN_COS_FOLDING_RATIO, accuracy>>(QUARTER_PI - x);
         case PiPi2_Pi3by4:
-            return _Internal::sin_inner_table(x);
+            return _Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::sin,SIN_COS_FOLDING_RATIO, accuracy>>(x);
         case PiPi3by4_2Pi:
-            return _Internal::cos_inner_table(QUARTER_PI - x);
+            return _Internal::generic_inner_table<T,_Internal::LUTInfo<double,Trigonometrix::cos,SIN_COS_FOLDING_RATIO, accuracy>>(QUARTER_PI - x);
         }
     }
     assert(false && "invalid range");
@@ -451,7 +482,7 @@ constexpr auto cos(T x) noexcept requires (std::is_integral_v<T>)
     return cos<double,accuracy,polyApprox>(double(x));
 }
 
-template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+template <typename T, std::size_t accuracy, bool polyApprox>
 constexpr T sin(T x) noexcept requires(std::is_floating_point_v<T>)
 {
     static_assert (accuracy < SIN_COS_ACC_MAP_COUNT, "invalid accuracy");
@@ -485,7 +516,7 @@ constexpr T sin(T x) noexcept requires(std::is_floating_point_v<T>)
 }
 
 // wrapper function to handle interger arguments
-template <typename T, std::size_t accuracy = sinCosAcc<T>, bool polyApprox = true>
+template <typename T, std::size_t accuracy, bool polyApprox>
 constexpr auto sin(T x) noexcept requires (std::is_integral_v<T>)
 {
     return sin<double,accuracy,polyApprox>(double(x));
@@ -628,49 +659,6 @@ template <typename T, bool fast = true>
 constexpr auto atan(T x) noexcept requires(std::is_integral_v<T>)
 {
     return atan<double,fast>(x);
-}
-
-/*
- * Approximation of acos(x) with a rational function f such that the
- * worst absolute error is minimal. That is, pick the function that performs best
- * in the worst case, and with following restrictions: acos(0) = Pi/2, acos(1) = 0, acos(-1) =
- * Source: https://github.com/ruuda/convector/blob/master/tools/approx_acos.py
- * Accuracy: av abs error 3e-11, max abs error 0.0167, accuracy get worse when aproaching the limits.
- * Up to 2 times faster than std, depending on compiler.
- * Returns the arccosine of a in the range [0,pi], expecting a to be in the range [-1,+1].
-*/
-template<typename T> constexpr T acos(T x) noexcept requires(std::is_floating_point_v<T>)
-{
-    assert(x >= -1 && x <= 1 && "invalid argument range");
-    constexpr T c1 = -0.939115566365855;
-    constexpr T c2 =  0.9217841528914573;
-    constexpr T c3 = -1.2845906244690837;
-    constexpr T c4 =  0.295624144969963174;
-    const T x2 = x * x;
-    const T x3 = x * x * x;
-    const T x4 = x * x * x * x;
-
-    return HALF_PI + (c1*x + c2*x3) / (1 + c3*x2 + c4*x4);
-
-}
-
-// wrapper function to handle interger arguments
-template<typename T> constexpr auto acos(T x) noexcept requires(std::is_integral_v<T>)
-{
-    return acos<double>(x);
-}
-
-// just a shifted version of acos implementation
-// Returns the arc cosine of a in the range [-pi/2,pi/2], expecting a to be in the range [-1,+1].
-template<typename T> constexpr T asin(T x) noexcept
-{
-    return HALF_PI - acos<T>(x);
-}
-
-// wrapper function to handle interger arguments
-template<typename T> constexpr auto asin(T x) noexcept requires(std::is_integral_v<T>)
-{
-    return HALF_PI - acos<double>(x);
 }
 
 
