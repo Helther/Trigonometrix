@@ -125,7 +125,7 @@ void speedTestsCos(std::random_device& r)
     */
 }
 
-void SinCosPolyAccuracyTests(bool sin)
+void sinCosPolyAccuracyTests(bool sin)
 {
     std::cout << std::endl <<"============== Polynomials Accuracy test by number of terms" << " ==============" << std::endl;
     double start = 0;
@@ -163,6 +163,46 @@ void SinCosPolyAccuracyTests(bool sin)
         accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,7>, &std::cos,std::string("cos, number of terms: " +
                                                                                                        std::to_string(std::get<0>(COS_POLIES[6]))).c_str());
         accuracyBench(start,periodRange,step,&Trigonometrix::cos<double,9>, &std::cos,std::string("cos, number of terms: " +
+                                                                                                       std::to_string(std::get<0>(COS_POLIES[7]))).c_str());
+    }
+}
+
+void sinCosPolyPerfTests(bool sin)
+{
+    std::cout << std::endl <<"============== Polynomials Accuracy test by number of terms" << " ==============" << std::endl;
+    // have to do it the old way
+    if (sin)
+    {
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double,0>, &std::sin, std::string("sin, number of terms: " +
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[1]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double,1>, &std::sin, std::string("sin, number of terms: " +
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[2]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double,2>, &std::sin, std::string("sin, number of terms: " +
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[3]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double,4>, &std::sin, std::string("sin, number of terms: " +
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[4]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double,6>, &std::sin, std::string("sin, number of terms: " +
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[5]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double,7>, &std::sin, std::string("sin, number of terms: " +
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[6]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::sin<double,9>, &std::sin, std::string("sin, number of terms: " +
+                                                                                                        std::to_string(std::get<0>(SIN_POLIES[7]))).c_str());
+    }
+    else
+    {
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::cos<double,0>, &std::cos,std::string("cos, number of terms: " +
+                                                                                                       std::to_string(std::get<0>(COS_POLIES[1]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::cos<double,1>, &std::cos,std::string("cos, number of terms: " +
+                                                                                                       std::to_string(std::get<0>(COS_POLIES[2]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::cos<double,2>, &std::cos,std::string("cos, number of terms: " +
+                                                                                                       std::to_string(std::get<0>(COS_POLIES[3]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::cos<double,4>, &std::cos,std::string("cos, number of terms: " +
+                                                                                                       std::to_string(std::get<0>(COS_POLIES[4]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::cos<double,6>, &std::cos,std::string("cos, number of terms: " +
+                                                                                                      std::to_string(std::get<0>(COS_POLIES[5]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::cos<double,7>, &std::cos,std::string("cos, number of terms: " +
+                                                                                                       std::to_string(std::get<0>(COS_POLIES[6]))).c_str());
+        speedBench(-rangeVal,rangeVal,stepVal,&Trigonometrix::cos<double,9>, &std::cos,std::string("cos, number of terms: " +
                                                                                                        std::to_string(std::get<0>(COS_POLIES[7]))).c_str());
     }
 }
@@ -252,7 +292,8 @@ int main()
     accuracyValuesSin<float>();
     accuracyValuesSin<double>();
     speedTestsSin(r);
-    SinCosPolyAccuracyTests(true);
+    sinCosPolyAccuracyTests(true);
+    sinCosPolyPerfTests(true);
     sinCosTableAccuracyTests(true);
     std::cout << std::endl << sep << std::endl << sepBrackets << " END Sine Benchmark " << sepBrackets << std::endl;
 
@@ -261,7 +302,8 @@ int main()
     accuracyValuesCos<float>();
     accuracyValuesCos<double>();
     speedTestsCos(r);
-    SinCosPolyAccuracyTests(false);
+    sinCosPolyAccuracyTests(false);
+    sinCosPolyPerfTests(false);
     sinCosTableAccuracyTests(false);
     std::cout << std::endl << sep << std::endl << sepBrackets << " END Cosine Benchmark " << sepBrackets << std::endl;
 

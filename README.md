@@ -1,5 +1,5 @@
 # Trigonometrix
-Constexpr C++ implementation of trigonometric functions approximations
+Fast constexpr C++ implementation of trigonometric functions approximations
 ## Features
  * constexpr time evaluated  functions
  * compile-time options for implementation(for speed vs accuracy tradeoffs)
@@ -9,9 +9,8 @@ Constexpr C++ implementation of trigonometric functions approximations
 ## Description
 Include header files and build in your project or run the provided tests.  
 For sine and cosine there are two implementations to compare against each other: lookup-table-based and polynom-based.  
-LUT is generated into source files given desired accuracy(which derives it's size). 
-Sizes where chosen based on used type precision, with accuracy in mind (they are quite large, 
-even though the function was folded over 1/8 of the period). Additionally gradients between data points 
+LUT is generated at compile-time, given desired accuracy (which derives it's size). 
+Sizes where chosen based on desired accuracy (function was folded over 1/8 of the period, so as tables). Additionally gradients between data points 
 were calculated for linear approximation to boost accuracy.  
 The other implementation uses MiniMax Polynomial Approximations generated for different degrees of accuracy. 
 The more accurate the longer it takes to compute. There is an option to set the desired accuracy at compile-time.  
@@ -42,7 +41,7 @@ Following tests were conducted against the standart STL functions:
 * accuracy tests over the large range of arguments for diffrent implementations over 1e+6+ runs
 * speed tests over the large range of arguments for different implementations over 1e+6+ runs
 * both random and fixed argument values versions of same tests
-* accuracy tests for different degrees of polinomial approximation  
+* accuracy tests for different degrees of polinomial approximation and table sizes
 
 Results of test run perfomed with clang-11 and gcc-10 with -O3 option(w/o fast math optimization) 
 are saved in [test_results.txt](test_results.txt)
