@@ -257,7 +257,6 @@ void atanTests(std::random_device& r)
     std::cout << std::endl <<"============== Speed test for general arg range" << " ==============" << std::endl;
     speedBench<double,std::chrono::microseconds>(-rangeVal, rangeVal, stepVal,&Trigonometrix::atan<double,true>, &Trigonometrix::atan,"atan, fast version");
     speedBench<double,std::chrono::microseconds>(-rangeVal, rangeVal, stepVal,&Trigonometrix::atan<double,false>, &Trigonometrix::atan,"atan, slow version");
-
 }
 
 void asinTests(std::random_device& r)
@@ -274,6 +273,91 @@ void acosTests(std::random_device& r)
     speedBench<double,std::chrono::nanoseconds>(-1.,1.,0.0001,&Trigonometrix::acos, &Trigonometrix::acos,"acos");
 }
 
+#if defined(__SSE2__) && defined(__FMA__)
+void intrinFuncTests()
+{
+    accuracyBench(float(-rangeVal), float(rangeVal), float(stepVal), &Trigonometrix::sinSSE, &std::sin, "float sin");
+    accuracyBench(-rangeVal, rangeVal, stepVal, &Trigonometrix::sinSSE, &std::sin, "double sin");
+    speedBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::sinSSE, &std::sin,"float sin");
+    speedBench(-rangeVal,rangeVal,stepVal, &Trigonometrix::sinSSE, &std::sin,"double sin");
+
+    accuracyBench(float(-rangeVal), float(rangeVal), float(stepVal), &Trigonometrix::cosSSE, &std::cos, "float cos");
+    accuracyBench(-rangeVal, rangeVal, stepVal, &Trigonometrix::cosSSE, &std::cos, "double cos");
+    speedBench(float(-rangeVal),float(rangeVal),float(stepVal), &Trigonometrix::cosSSE, &std::cos,"float cos");
+    speedBench(-rangeVal,rangeVal,stepVal, &Trigonometrix::cosSSE, &std::cos,"double cos");
+}
+
+template <typename T>
+void sinCosAccBench()
+{
+    std::vector<T> measureS;
+    std::vector<T> controlS;
+    std::vector<T> measureC;
+    std::vector<T> controlC;
+    u_int64_t count = 0;
+    for(T i = -rangeVal; i < T(rangeVal); i+=T(stepVal), ++count)
+    {
+        T s, c;
+        Trigonometrix::sinCos(i, s, c);
+        measureS.push_back(s);
+        measureC.push_back(c);
+        s = std::sin(i);
+        c = std::cos(i);
+        controlS.push_back(s);
+        controlC.push_back(c);
+    }
+    std::cout << " number of passes " << std::to_string(count) << std::endl;
+    std::cout << "abs error: " << std::max(absoluteAverageError(measureS, controlS), absoluteAverageError(measureC, controlC)) << std::endl;
+    std::cout << "rel error: " << std::max(relativeAverageError(measureS, controlS), relativeAverageError(measureC, controlC)) << std::endl;
+    std::cout << "rms error: " << std::max(rmsError(measureS, controlS), rmsError(measureC, controlC)) << std::endl;
+    std::cout << "max abs error: " << std::max(absoluteMaxError(measureS, controlS), absoluteMaxError(measureC, controlC)) << std::endl;
+    std::cout << "max rel error: " << std::max(relativeMaxError(measureS, controlS), relativeMaxError(measureC, controlC)) << std::endl;
+}
+
+template <typename T>
+void sinCosSpeedBench()
+{
+    T start = -rangeVal;
+    T range = rangeVal;
+    T step = stepVal;
+    u_int64_t count = 0;
+    for(T i = start; i < range; i+=step, ++count);
+    std::cout << " number of passes " << std::to_string(count) << std::endl;
+    T s, c;
+    auto startTime = std::chrono::high_resolution_clock::now();
+    for(T i = start; i < range; i+=step)
+        Trigonometrix::sinCos(i, s, c);
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << "Measured duration in " << TimeScaleStr<std::chrono::milliseconds> << ": " <<  duration.count() << std::endl;
+
+    auto startTime2 = std::chrono::high_resolution_clock::now();
+    for(T i = start; i < range; i+=step)
+    {
+        s = std::sin(i);
+        c = std::cos(i);
+    }
+    auto endTime2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(endTime2 - startTime2);
+    std::cout << "Control duration in " << TimeScaleStr<std::chrono::milliseconds> << ": " << duration2.count() << std::endl;
+    auto diff = float(duration.count()) / float(duration2.count());
+    auto res = (diff > 1.f) ? "slower" : "faster";
+    std::cout << ((diff > 1.f) ? diff :  1.f/diff) << " times " << res << " than control function" << std::endl;
+}
+
+void sinCosTests()
+{
+    std::cout << std::endl <<"=========== Accuracy Benchmark for sinCos float version ============" << std::endl;
+    sinCosAccBench<float>();
+    std::cout << std::endl <<"=========== Speed Benchmark for sinCos float version ============" << std::endl;
+    sinCosSpeedBench<float>();
+    std::cout << std::endl <<"=========== Accuracy Benchmark for sinCos double version ============" << std::endl;
+    sinCosAccBench<double>();
+    std::cout << std::endl <<"=========== Speed Benchmark for sinCos double version ============" << std::endl;
+    sinCosSpeedBench<double>();
+}
+#endif
+
 
 int main()
 {    
@@ -287,6 +371,7 @@ int main()
     constexprTest<float>();
     constexprTest<double>();
     constexprTest<int>();
+
     std::cout << std::endl << sep << std::endl << sepBrackets << " Sine Benchmark " << sepBrackets << std::endl;
     accuracyRangeTestsSin(r);
     accuracyValuesSin<float>();
@@ -322,6 +407,14 @@ int main()
     std::cout << std::endl << sep << std::endl << sepBrackets << " Arc Cosine Benchmark " << sepBrackets << std::endl;
     acosTests(r);
     std::cout << std::endl << sep << std::endl << sepBrackets << " END Arc Cosine Benchmark " << sepBrackets << std::endl;
+#if defined(__SSE2__) && defined(__FMA__)
+    std::cout << std::endl << sep << std::endl << sepBrackets << " SSE versions of sin and cos Benchmark " << sepBrackets << std::endl;
+    intrinFuncTests();
+    std::cout << std::endl << sep << std::endl << sepBrackets << " END SSE verions of sin and cos Benchmark " << sepBrackets << std::endl;
 
+    std::cout << std::endl << sep << std::endl << sepBrackets << " sinCos Benchmark " << sepBrackets << std::endl;
+    sinCosTests();
+    std::cout << std::endl << sep << std::endl << sepBrackets << " END sinCos Benchmark " << sepBrackets << std::endl;
+#endif
     return 0;
 }

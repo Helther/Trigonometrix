@@ -631,6 +631,102 @@ Std duration in nS: 62404
 
 ========================================================================
 ======================== END Arc Cosine Benchmark ========================
+
+========================================================================
+======================== SSE versions of sin and cos Benchmark ========================
+
+=========== Accuracy Benchmark float sin ===========
+ number of passes 3196593
+abs error: 1.6358e-08
+rel error: 1.81854e-07
+rms error: 3.02917e-08
+max abs error: 1.49943e-07
+max rel error: 0.0301174
+
+=========== Accuracy Benchmark double sin ===========
+ number of passes 3141593
+abs error: 1.94888e-13
+rel error: 1.66002e-07
+rms error: 2.49963e-13
+max abs error: 6.12375e-13
+max rel error: 0.521497
+
+=========== Speed Benchmark float sin ============
+ number of passes 3196593
+Measured duration in mS: 17
+Control duration in mS: 0
+inf times slower than control function // wtf?
+
+=========== Speed Benchmark double sin ============
+ number of passes 3141593
+Measured duration in mS: 17
+Control duration in mS: 30
+1.76471 times faster than control function
+
+=========== Accuracy Benchmark float cos ===========
+ number of passes 3196593
+abs error: 1.64272e-08
+rel error: 1.66739e-07
+rms error: 3.04057e-08
+max abs error: 1.52737e-07
+max rel error: 0.0241064
+
+=========== Accuracy Benchmark double cos ===========
+ number of passes 3141593
+abs error: 1.94888e-13
+rel error: 2.86184e-12
+rms error: 2.49963e-13
+max abs error: 6.12279e-13
+max rel error: 4.16344e-07
+
+=========== Speed Benchmark float cos ============
+ number of passes 3196593
+Measured duration in mS: 19
+Control duration in mS: 0
+inf times slower than control function // wtf?
+
+=========== Speed Benchmark double cos ============
+ number of passes 3141593
+Measured duration in mS: 18
+Control duration in mS: 31
+1.72222 times faster than control function
+
+========================================================================
+======================== END SSE verions of sin and cos Benchmark ========================
+
+========================================================================
+======================== sinCos Benchmark ========================
+
+=========== Accuracy Benchmark for sinCos float version ============
+ number of passes 3196593
+abs error: 1.64975e-08
+rel error: 1.7981e-07
+rms error: 3.05552e-08
+max abs error: 1.52737e-07
+max rel error: 0.0301174
+
+=========== Speed Benchmark for sinCos float version ============
+ number of passes 3196593
+Measured duration in mS: 20
+Control duration in mS: 27
+1.35 times faster than control function
+
+=========== Accuracy Benchmark for sinCos double version ============
+ number of passes 3141593
+abs error: 1.9488e-13
+rel error: 1.66002e-07
+rms error: 2.49956e-13
+max abs error: 6.12323e-13
+max rel error: 0.521497
+
+=========== Speed Benchmark for sinCos double version ============
+ number of passes 3141593
+Measured duration in mS: 20
+Control duration in mS: 51
+2.55 times faster than control function
+
+========================================================================
+======================== END sinCos Benchmark ========================
 11:39:52: gcc_10-Release/tests/SinCosTests exited with code 0
 
 
@@ -1269,4 +1365,100 @@ Std duration in nS: 91544
 
 ========================================================================
 ======================== END Arc Cosine Benchmark ========================
+
+========================================================================
+======================== SSE versions of sin and cos Benchmark ========================
+
+=========== Accuracy Benchmark float sin ===========
+ number of passes 3196593
+abs error: 1.6358e-08
+rel error: 1.81855e-07
+rms error: 3.02917e-08
+max abs error: 1.49943e-07
+max rel error: 0.0301174
+
+=========== Accuracy Benchmark double sin ===========
+ number of passes 3141593
+abs error: 2.40823e-13
+rel error: 3.18314e-07
+rms error: 3.72331e-13
+max abs error: 1.50516e-12
+max rel error: 1
+
+=========== Speed Benchmark float sin ============
+ number of passes 3196593
+Measured duration in mS: 25
+Control duration in mS: 27
+1.08 times faster than control function
+
+=========== Speed Benchmark double sin ============
+ number of passes 3141593
+Measured duration in mS: 31
+Control duration in mS: 31
+1 times faster than control function
+
+=========== Accuracy Benchmark float cos ===========
+ number of passes 3196593
+abs error: 1.64272e-08
+rel error: 1.66739e-07
+rms error: 3.04057e-08
+max abs error: 1.52737e-07
+max rel error: 0.0241064
+
+=========== Accuracy Benchmark double cos ===========
+ number of passes 3141593
+abs error: 2.40816e-13
+rel error: 3.37841e-12
+rms error: 3.72321e-13
+max abs error: 1.50525e-12
+max rel error: 4.37863e-07
+
+=========== Speed Benchmark float cos ============
+ number of passes 3196593
+Measured duration in mS: 24
+Control duration in mS: 27
+1.125 times faster than control function
+
+=========== Speed Benchmark double cos ============
+ number of passes 3141593
+Measured duration in mS: 30
+Control duration in mS: 32
+1.06667 times faster than control function
+
+========================================================================
+======================== END SSE verions of sin and cos Benchmark ========================
+
+========================================================================
+======================== sinCos Benchmark ========================
+
+=========== Accuracy Benchmark for sinCos float version ============
+ number of passes 3196593
+abs error: 1.64975e-08
+rel error: 1.7981e-07
+rms error: 3.05552e-08
+max abs error: 1.52737e-07
+max rel error: 0.0301174
+
+=========== Speed Benchmark for sinCos float version ============
+ number of passes 3196593
+Measured duration in mS: 10
+Control duration in mS: 3
+3.33333 times slower than control function
+
+=========== Accuracy Benchmark for sinCos double version ============
+ number of passes 3141593
+abs error: 2.40819e-13
+rel error: 3.18314e-07
+rms error: 3.72326e-13
+max abs error: 1.50525e-12
+max rel error: 1
+
+=========== Speed Benchmark for sinCos double version ============
+ number of passes 3141593
+Measured duration in mS: 8
+Control duration in mS: 3
+2.66667 times slower than control function
+
+========================================================================
+======================== END sinCos Benchmark ========================
 11:43:56: clang_11-Release/tests/SinCosTests exited with code 0

@@ -13,6 +13,9 @@
 #include "lut_generator.hpp"
 #include <limits>
 #include <inttypes.h>
+#if defined(__SSE2__) && defined(__FMA__)
+#include <x86intrin.h>
+#endif
 
 
 inline constexpr auto DEG_TO_RAD = 1.7453292519943295769236907684886E-2;
@@ -52,7 +55,7 @@ enum Quads
  * worst absolute error is minimal. That is, pick the function that performs best
  * in the worst case, and with following restrictions: acos(0) = Pi/2, acos(1) = 0, acos(-1) =
  * Source: https://github.com/ruuda/convector/blob/master/tools/approx_acos.py
- * Accuracy: av abs error 3e-11, max abs error 0.0167, accuracy get worse when aproaching the limits.
+ * Accuracy: av abs error 3e-11, max abs error 0.0167, accuracy gets worse when aproaching the limits.
  * Up to 2 times faster than std, depending on compiler.
  * Returns the arccosine of a in the range [0,pi], expecting a to be in the range [-1,+1].
 */
@@ -68,7 +71,6 @@ template<typename T> constexpr T acos(T x) noexcept requires(std::is_floating_po
     const T x4 = x * x * x * x;
 
     return HALF_PI + (c1*x + c2*x3) / (1 + c3*x2 + c4*x4);
-
 }
 
 // wrapper function to handle interger arguments
@@ -297,7 +299,7 @@ template<typename T> constexpr auto asin(T x) noexcept requires(std::is_integral
         return {quad, false};
     }
 
-    template<typename T> constexpr auto getNearestInt(T x)
+    template<typename T> constexpr auto getNearestInt(T x) noexcept
     {
         static_assert(std::is_floating_point<T>(), "Invalid arg type");
         constexpr auto h = T(0.5) - std::numeric_limits<T>::epsilon();
@@ -307,12 +309,13 @@ template<typename T> constexpr auto asin(T x) noexcept requires(std::is_integral
 
 //======================= Generic LU table implementation ====================//
 
-    // loose approximation of what size of the table whould be for a given relative error
-    constexpr int constLUTSizeFromAcc(double relError, int ratio)
+    // loose approximation of what size of the table should be for a given relative error
+    constexpr int constLUTSizeFromAcc(double relError, int ratio) noexcept
     {
         return int(M_PI / Trigonometrix::acos(1 - relError) / ratio) + 1;
     }
     // maps number of accurate significant needed to the max error value for constLUTSizeFromAcc
+    // same values after 5 entry are due to compiler limitation for clang and gcc (at least)
     inline constexpr std::array<double,SIN_COS_ACC_MAP_COUNT> SC_LUT_ACC_MAP =
     { 0.1,0.01,0.001,0.0001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,0.00001 };
 
@@ -340,7 +343,7 @@ template<typename T> constexpr auto asin(T x) noexcept requires(std::is_integral
         const T diff = x - index;
 
         const int gradIndex = (diff < 0 && index > 0) ? index-1 : index;
-        // TODO test FMA version
+
         return std::get<0>(TableInfo::table[index]) + diff * std::get<1>(TableInfo::table[gradIndex]);
     }
 
@@ -409,7 +412,7 @@ constexpr auto sin(T x) noexcept requires (std::is_integral_v<T>);
 /*
  * Approximations of Sine/Cosine, where:
  * polyApprox - defines implementation, poly for polynomial, else LUT
- * accuracy - integer value in range 0..10 that scales up the accuracy
+ * accuracy - integer value in range 0..10(for LUT version only 0..4) that scales up the accuracy
  * of the approximation, where value stands for number of digits of accurary required
  * in fractional part of the result (i.e. to get 0.0xx accuracy choose accuracy=1,
  * so it guarantees that maximum absolute error will be lower than 0.1 on the argument range).
@@ -659,6 +662,403 @@ template <typename T, bool fast = true>
 constexpr auto atan(T x) noexcept requires(std::is_integral_v<T>)
 {
     return atan<double,fast>(x);
+}
+
+//================ Intrinsics for single and double precision ================//
+// Should be more accurate because fma does only one rounding
+#if defined(__SSE2__) && defined(__FMA__)
+namespace _Internal
+{
+    float inner_poly_intrin(float x, bool sin) noexcept
+    {
+        // compute polynomial
+        const float x2 = x * x;
+        __m128 fmaRes, add;
+        __m128 argSquared = _mm_set1_ps(x2);
+        if (sin)
+        {
+            fmaRes = _mm_set1_ps(SIN_DEGREE_9[4]);
+
+            add = _mm_set1_ps(SIN_DEGREE_9[3]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            add = _mm_set1_ps(SIN_DEGREE_9[2]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            add = _mm_set1_ps(SIN_DEGREE_9[1]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            add = _mm_set1_ps(SIN_DEGREE_9[0]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            std::array<float,4> resVector;
+            _mm_store1_ps(resVector.data(), fmaRes);
+            return resVector[0] * x;
+        }
+        else
+        {
+            fmaRes = _mm_set1_ps(COS_DEGREE_10[5]);
+
+            add = _mm_set1_ps(COS_DEGREE_10[4]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            add = _mm_set1_ps(COS_DEGREE_10[3]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            add = _mm_set1_ps(COS_DEGREE_10[2]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            add = _mm_set1_ps(COS_DEGREE_10[1]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            add = _mm_set1_ps(COS_DEGREE_10[0]);
+            fmaRes = _mm_fmadd_ps(fmaRes, argSquared, add);
+
+            std::array<float,4> resVector;
+            _mm_store1_ps(resVector.data(), fmaRes);
+            return resVector[0];
+        }
+    }
+
+    double inner_poly_intrin(double x, bool sin) noexcept
+    {
+        // compute polynomial
+        const double x2 = x * x;
+        __m128d fmaRes, add;
+        __m128d argSquared = _mm_set1_pd(x2);
+        if (sin)
+        {
+            fmaRes = _mm_set1_pd(SIN_DEGREE_17[8]);
+
+            add = _mm_set1_pd(SIN_DEGREE_17[7]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(SIN_DEGREE_17[6]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(SIN_DEGREE_17[5]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(SIN_DEGREE_17[4]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(SIN_DEGREE_17[3]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(SIN_DEGREE_17[2]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(SIN_DEGREE_17[1]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(SIN_DEGREE_17[0]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            std::array<double,2> resVector;
+            _mm_store1_pd(resVector.data(), fmaRes);
+            return resVector[0] * x;
+        }
+        else
+        {
+            fmaRes = _mm_set1_pd(COS_DEGREE_18[9]);
+
+            add = _mm_set1_pd(COS_DEGREE_18[8]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(COS_DEGREE_18[7]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(COS_DEGREE_18[6]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(COS_DEGREE_18[5]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(COS_DEGREE_18[4]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(COS_DEGREE_18[3]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(COS_DEGREE_18[2]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(COS_DEGREE_18[1]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            add = _mm_set1_pd(COS_DEGREE_18[0]);
+            fmaRes = _mm_fmadd_pd(fmaRes, argSquared, add);
+
+            std::array<double,2> resVector;
+            _mm_store1_pd(resVector.data(), fmaRes);
+            return resVector[0];
+        }
+    }
+
+    std::array<float,4> inner_sin_cos_intrin(float x) noexcept
+    {
+        const float x2 = x * x;
+        __m128 _fmaRes, _add;
+        __m128 _argSquared = _mm_set1_ps(x2);
+
+        _fmaRes = _mm_set_ps(0, 0, COS_DEGREE_10[5], SIN_DEGREE_11[5]);
+
+        _add = _mm_set_ps(0, 0, COS_DEGREE_10[4], SIN_DEGREE_11[4]);
+        _fmaRes = _mm_fmadd_ps(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_ps(0, 0, COS_DEGREE_10[3], SIN_DEGREE_11[3]);
+        _fmaRes = _mm_fmadd_ps(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_ps(0, 0, COS_DEGREE_10[2], SIN_DEGREE_11[2]);
+        _fmaRes = _mm_fmadd_ps(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_ps(0, 0, COS_DEGREE_10[1], SIN_DEGREE_11[1]);
+        _fmaRes = _mm_fmadd_ps(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_ps(0, 0, COS_DEGREE_10[0], SIN_DEGREE_11[0]);
+        _fmaRes = _mm_fmadd_ps(_fmaRes, _argSquared, _add);
+
+        _fmaRes = _mm_mul_ss(_fmaRes, _mm_load_ss(&x)); // multiply sin result by x (lower float) and carry over other bits
+
+        std::array<float,4> resVector;
+        _mm_store_ps(resVector.data(), _fmaRes);
+
+        return resVector;
+    }
+
+    std::array<double,2> inner_sin_cos_intrin(double x) noexcept
+    {
+        const double x2 = x * x;
+        __m128d _fmaRes, _add;
+        __m128d _argSquared = _mm_set1_pd(x2);
+
+        _fmaRes = _mm_set_pd(COS_DEGREE_16[8], SIN_DEGREE_17[8]);
+
+        _add = _mm_set_pd(COS_DEGREE_16[7], SIN_DEGREE_17[7]);
+        _fmaRes = _mm_fmadd_pd(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_pd(COS_DEGREE_16[6], SIN_DEGREE_17[6]);
+        _fmaRes = _mm_fmadd_pd(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_pd(COS_DEGREE_16[5], SIN_DEGREE_17[5]);
+        _fmaRes = _mm_fmadd_pd(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_pd(COS_DEGREE_16[4], SIN_DEGREE_17[4]);
+        _fmaRes = _mm_fmadd_pd(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_pd(COS_DEGREE_16[3], SIN_DEGREE_17[3]);
+        _fmaRes = _mm_fmadd_pd(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_pd(COS_DEGREE_16[2], SIN_DEGREE_17[2]);
+        _fmaRes = _mm_fmadd_pd(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_pd(COS_DEGREE_16[1], SIN_DEGREE_17[1]);
+        _fmaRes = _mm_fmadd_pd(_fmaRes, _argSquared, _add);
+
+        _add = _mm_set_pd(COS_DEGREE_16[0], SIN_DEGREE_17[0]);
+        _fmaRes = _mm_fmadd_pd(_fmaRes, _argSquared, _add);
+
+        _fmaRes = _mm_mul_sd(_fmaRes, _mm_load_sd(&x)); // multiply sin result by x (lower double) and carry over other bits
+
+        std::array<double,2> resVector;
+        _mm_store_pd(resVector.data(), _fmaRes);
+
+        return resVector;
+    }
+}
+#endif
+
+template <typename T>
+T sinSSE(T x) noexcept requires(std::is_floating_point_v<T>)
+{
+    if (x == std::numeric_limits<T>::infinity())
+        return std::numeric_limits<T>::signaling_NaN();
+
+#if defined(__SSE2__) && defined(__FMA__)
+    // handle large args - set up control variables
+    const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, HALF_PI, INV_HALF_PI);
+    int sign;
+    bool useSinCoeffs;
+    if (res.noReduciton)
+    {
+        sign = 1;
+        useSinCoeffs = true;
+    }
+    else
+    {
+        sign = res.quad >= 0 ? 1 : -1;
+        x *= sign;
+        switch ((res.quad*sign) & Pi3by2_2Pi)
+        {
+        case Zero_Pi2:
+            useSinCoeffs = true;
+            break;
+        case Pi2_Pi:
+            useSinCoeffs = false;
+            break;
+        case Pi_Pi3by2:
+            useSinCoeffs = true;
+            sign = -sign;
+            break;
+        case Pi3by2_2Pi:
+            useSinCoeffs = false;
+            sign = -sign;
+            break;
+        default:
+            assert(false && "invalid range");
+        }
+    }
+
+    if (x == 0)
+        return sign * (useSinCoeffs ? 0 : 1);
+
+    return sign * _Internal::inner_poly_intrin(x, useSinCoeffs);
+#else // fallback
+    return Trigonometrix::sin<T>(x);
+#endif
+}
+
+// wrapper function to handle interger arguments
+template <typename T>
+auto sinSSE(T x) noexcept requires(std::is_integral_v<T>)
+{
+    return sinSSE<double>(x);
+}
+
+template <typename T>
+T cosSSE(T x) requires(std::is_floating_point_v<T>)
+{
+    if (x == std::numeric_limits<T>::infinity())
+        return std::numeric_limits<T>::signaling_NaN();
+#if defined(__SSE2__) && defined(__FMA__)
+    // handle large args - set up control variables
+    const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, HALF_PI, INV_HALF_PI);
+    int sign;
+    bool useSinCoeffs;
+    if (res.noReduciton)
+    {
+        sign = 1;
+        useSinCoeffs = false;
+    }
+    else
+    {
+        sign = res.quad >= 0 ? 1 : -1;
+        x *= sign;
+        switch ((res.quad*sign) & Pi3by2_2Pi)
+        {
+        case Zero_Pi2:
+            useSinCoeffs = false;
+            sign = 1;
+            break;
+        case Pi2_Pi:
+            useSinCoeffs = true;
+            sign = -1;
+            break;
+        case Pi_Pi3by2:
+            useSinCoeffs = false;
+            sign = -1;
+            break;
+        case Pi3by2_2Pi:
+            useSinCoeffs = true;
+            sign = 1;
+            break;
+        default:
+            assert(false && "invalid range");
+        }
+    }
+
+    if (x == 0)
+        return sign * (useSinCoeffs ? 0 : 1);
+
+    return sign * _Internal::inner_poly_intrin(x, useSinCoeffs);
+#else // fallback
+    return Trigonometrix::cos<T>(x);
+#endif
+}
+
+// wrapper function to handle interger arguments
+template <typename T>
+auto cosSSE(T x) noexcept requires(std::is_integral_v<T>)
+{
+    return cosIntrin<double>(x);
+}
+
+template <typename T>
+void sinCos(T x, T& sinRes, T& cosRes) noexcept requires (std::is_same_v<T, float> || std::is_same_v<T, double>)
+{
+    assert(x != std::numeric_limits<T>::infinity());
+#if defined(__SSE2__) && defined(__FMA__)
+    // handle large args - set up control variables
+    const _Internal::ReductionRes res = x > RANGE_REDUCTION_SWITCH ? _Internal::payneHayekRangeReduce(x) : _Internal::addRangeReduce(x, HALF_PI, INV_HALF_PI);
+
+    // 0 index is for sin and 1 is for cos
+    std::array<int,2> sign;
+    std::array<int,2> resVectorIndex; // defines which part of the approximation to use (sin or cos) with index in resulting vector
+    if (res.noReduciton)
+    {
+        sign[0] = 1;
+        sign[1] = 1;
+        resVectorIndex[0] = 0;
+        resVectorIndex[1] = 1;
+    }
+    else
+    {
+        sign[0] = res.quad >= 0 ? 1 : -1;
+        x *= sign[0];
+        switch ((res.quad*sign[0]) & Pi3by2_2Pi)
+        {
+        case Zero_Pi2:
+            resVectorIndex[0] = 0;
+            resVectorIndex[1] = 1;
+            sign[1] = 1;
+            break;
+        case Pi2_Pi:
+            resVectorIndex[0] = 1;
+            resVectorIndex[1] = 0;
+            sign[1] = -1;
+            break;
+        case Pi_Pi3by2:
+            resVectorIndex[0] = 0;
+            sign[0] = -sign[0];
+            resVectorIndex[1] = 1;
+            sign[1] = -1;
+            break;
+        case Pi3by2_2Pi:
+            resVectorIndex[0] = 1;
+            sign[0] = -sign[0];
+            resVectorIndex[1] = 0;
+            sign[1] = 1;
+            break;
+        default:
+            assert(false && "invalid range");
+        }
+    }
+
+    if (x == 0)
+    {
+        sinRes = sign[0] * resVectorIndex[0];
+        cosRes = sign[1] * resVectorIndex[1];
+        return;
+    }
+
+    if constexpr (std::is_same_v<T, float>)
+    {
+        std::array<float,4> resVector = _Internal::inner_sin_cos_intrin(x);
+
+        sinRes = sign[0] * resVector[resVectorIndex[0]];
+        cosRes = sign[1] * resVector[resVectorIndex[1]];
+    }
+    else
+    {
+        std::array<double,2> resVector = _Internal::inner_sin_cos_intrin(x);
+
+        sinRes = sign[0] * resVector[resVectorIndex[0]];
+        cosRes = sign[1] * resVector[resVectorIndex[1]];
+    }
+#else// fallback
+    sinRes = Trigonometrix::sin<T>(x);
+    cosRes = Trigonometrix::cos<T>(x);
+#endif
 }
 
 

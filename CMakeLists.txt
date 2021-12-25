@@ -5,7 +5,10 @@ project(${project_name} LANGUAGES CXX)
 
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_20)
-
+# for clang and gcc add -mfma and for msvc /fp:fast
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options("-mfma")
+endif()
 add_executable(${project_name}
     src/main.cpp
     src/trigonometry.hpp
@@ -23,5 +26,5 @@ if(ENABLE_TESTING)
     "Building Tests."
   )
   add_subdirectory(tests)
-  add_test(SinCosTests tests/tests 1)
+  add_test(Benchmark tests/tests 1)
 endif()

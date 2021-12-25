@@ -239,17 +239,17 @@ float speedBench(T start, T range, T step, T(*MeasureFunc)(T), T(*ControlFunc)(T
         MeasureFunc(i);
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<TimeScale>(endTime - startTime);
-    std::cout << "Trigonometrix duration in " << TimeScaleStr<TimeScale> << ": " <<  duration.count() << std::endl;
+    std::cout << "Measured duration in " << TimeScaleStr<TimeScale> << ": " <<  duration.count() << std::endl;
 
     auto startTime2 = std::chrono::high_resolution_clock::now();
     for(T i = start; i < range; i+=step)
         ControlFunc(i);
     auto endTime2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<TimeScale>(endTime2 - startTime2);
-    std::cout << "Std duration in " << TimeScaleStr<TimeScale> << ": " << duration2.count() << std::endl;
+    std::cout << "Control duration in " << TimeScaleStr<TimeScale> << ": " << duration2.count() << std::endl;
     auto diff = float(duration.count()) / float(duration2.count());
     auto res = (diff > 1.f) ? "slower" : "faster";
-    std::cout << ((diff > 1.f) ? diff :  1.f/diff) << " times " << res << " than std" << std::endl;
+    std::cout << ((diff > 1.f) ? diff :  1.f/diff) << " times " << res << " than control function" << std::endl;
     return diff;
 }
 // returns relative runtime diffence, compared to control func
@@ -272,15 +272,15 @@ float speedBenchRand(T min, T max, int size, T(*MeasureFunc)(T), T(*ControlFunc)
         MeasureFunc(i);
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<TimeScale>(endTime - startTime);
-    std::cout << "Trigonometrix duration in " << TimeScaleStr<TimeScale> << ": " << duration.count() << std::endl;
+    std::cout << "Measured duration in " << TimeScaleStr<TimeScale> << ": " << duration.count() << std::endl;
     auto startTime2 = std::chrono::high_resolution_clock::now();
     for(T& i : data)
         ControlFunc(i);
     auto endTime2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<TimeScale>(endTime2 - startTime2);
-    std::cout << "Std duration in " << TimeScaleStr<TimeScale> << ": " << duration2.count() << std::endl;
+    std::cout << "Control duration in " << TimeScaleStr<TimeScale> << ": " << duration2.count() << std::endl;
     auto diff = float(duration.count()) / float(duration2.count());
     auto res = (diff > 1.f) ? "slower" : "faster";
-    std::cout << ((diff > 1.f) ? diff :  1.f/diff) << " times " << res << " than std" << std::endl;
+    std::cout << ((diff > 1.f) ? diff :  1.f/diff) << " times " << res << " than control function" << std::endl;
     return diff;
 }

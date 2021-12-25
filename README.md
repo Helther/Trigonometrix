@@ -6,6 +6,7 @@ Fast constexpr C++ implementation of trigonometric functions approximations
  * constexpr lookup table generator
  * testing and benchmarking utilities
  * test cases for accuracy and speed benchmarks
+ * SSE2/FMA implementations of some functions(where it's appropriate)
 ## Description
 Include header files and build in your project or run the provided tests.  
 For sine and cosine there are two implementations to compare against each other: lookup-table-based and polynom-based.  
@@ -14,6 +15,7 @@ Sizes where chosen based on desired accuracy (function was folded over 1/8 of th
 were calculated for linear approximation to boost accuracy.  
 The other implementation uses MiniMax Polynomial Approximations generated for different degrees of accuracy. 
 The more accurate the longer it takes to compute. There is an option to set the desired accuracy at compile-time.  
+There are also fast implementations using FMA instruction set to speed up polynom computation and reduce rounding error.  
 
 Tangent, and arc-functions aren't suited as well as periodic sine/cosine for straight minimax polynomial approximation,
 so they provide an option for fast/slow versions.
@@ -23,7 +25,7 @@ The following compilers should work:
 
   * [gcc 10+](https://gcc.gnu.org/)
 
-  * [clang 10+](https://clang.llvm.org/)
+  * [clang 11+](https://clang.llvm.org/)
 
 2. [CMake 3.5+](https://cmake.org/)
 
@@ -51,7 +53,9 @@ In conclusion tests showed lower than expected accuracy for both implementations
 while reducing argument range, but it was expected for large args). Also perfomance is on par(in case of polynom) 
 or slighly worse than STL in case of table implementation, so further optimizations are needed.
 Other functions showed overall better perfomance compared to stl at a higher cost of lower accuracy.  
-Test results snippet:
+SSE benchmark results varied heavily between compilers, with clang somehow outperforming SSE version  
+with two separate calls to sin and cos.  
+Test results snippet(averages, because actual resuls may vary greatly depending on the compiler):
 ```
 sine
 =========== Speed Benchmark float test table implementation ============
@@ -92,12 +96,22 @@ arc sine
 arc cosine
 =========== Speed Benchmark acos ============
 2.20 times faster than std
+
+
+SSE enchanced functions
+=========== Speed Benchmark sin ============
+1.58 times faster than std
+=========== Speed Benchmark cos ============
+1.64 times faster than std
+=========== Speed Benchmark sin-cos ============
+3.03 times faster than std
 ```
 
 ### Building the tests
 ctests are build via CMake by specifying test target.
+Example:
 ```
- $ cmake --build . --target SinCosTests
+ $ cmake --build . --target BenchmarkTests
 ```
 
 ### Running the tests
@@ -108,9 +122,7 @@ To run built tests
 
 ## TODO: 
 * Add comparison tests with other libraries
-* Add tests for FMA contracted versions of approximations
-* Add implementations using vector SSE intrinsics and corresponding tests 
-
+* Add Unit tests for accuracy
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
