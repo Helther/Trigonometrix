@@ -1,5 +1,8 @@
 # Trigonometrix
 Fast constexpr C++ implementation of trigonometric functions approximations
+# NOTE: Current State of the project
+As of now, this project has been updated and merged into https://github.com/Illiren/geometrix, where it will be updated further.
+There is no plans to update this repository for now.
 ## Features
  * constexpr time evaluated  functions
  * compile-time options for implementation(for speed vs accuracy tradeoffs)
